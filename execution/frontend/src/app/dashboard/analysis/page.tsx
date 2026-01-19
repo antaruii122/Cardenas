@@ -4,16 +4,25 @@ import { useEffect, useState } from "react";
 import { FinancialStatement } from "@/lib/types";
 import { ArrowUpRight, ArrowDownRight, TrendingUp, AlertTriangle, CheckCircle2 } from "lucide-react";
 
+import { useRouter } from "next/navigation";
+
 export default function AnalysisPage() {
     const [data, setData] = useState<FinancialStatement | null>(null);
     const [warnings, setWarnings] = useState<string[]>([]);
+    const router = useRouter();
 
     useEffect(() => {
         // Load from local storage (Provisional for MVP)
         const storedData = localStorage.getItem("financialData");
         const storedWarnings = localStorage.getItem("financialWarnings");
 
-        if (storedData) setData(JSON.parse(storedData));
+        if (storedData) {
+            setData(JSON.parse(storedData));
+        } else {
+            // No data found -> Redirect to upload
+            router.push("/dashboard");
+        }
+
         if (storedWarnings) setWarnings(JSON.parse(storedWarnings));
     }, []);
 
