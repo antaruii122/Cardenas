@@ -7,9 +7,9 @@ export default function Home() {
     <div className="min-h-screen flex flex-col items-center justify-center p-8 sm:p-20 font-[family-name:var(--font-geist-sans)] relative overflow-hidden">
 
       {/* Background Decorative Blobs */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-        <div className="absolute top-[-10%] left-[20%] w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[20%] w-[400px] h-[400px] bg-success/10 rounded-full blur-[100px]" />
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none opacity-50">
+        <div className="absolute top-[-10%] left-[20%] w-[300px] h-[300px] bg-primary/20 rounded-full blur-[80px]" />
+        <div className="absolute bottom-[-10%] right-[20%] w-[300px] h-[300px] bg-success/10 rounded-full blur-[80px]" />
       </div>
 
       <main className="max-w-6xl w-full flex flex-col gap-16 items-center z-10">
