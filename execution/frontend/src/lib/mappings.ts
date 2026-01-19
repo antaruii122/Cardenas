@@ -42,12 +42,16 @@ export const PNL_MAPPINGS: Record<string, string[]> = {
         "ebit" // Sometimes confused, but maps to Operating Profit usually
     ],
     netIncome: [
-        "utilidad neta",
-        "resultado del ejercicio",
+        "utilidad neta", // Standard
+        "resultado del ejercicio", // Common in Chile
         "ganancia neta",
         "pérdida neta",
         "resultado final",
-        "utilidad (pérdida) del ejercicio"
+        "utilidad (pérdida) del ejercicio",
+        "utilidad del ejercicio",
+        "ganancia (pérdida) del periodo",
+        "resultado del periodo",
+        "resultado neto"
     ]
 };
 

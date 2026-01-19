@@ -5,10 +5,14 @@ import { FinancialStatement } from "@/lib/types";
 import { ArrowUpRight, ArrowDownRight, TrendingUp, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 import { useRouter } from "next/navigation";
+import { FinancialCharts } from "@/components/FinancialCharts";
+import { DataGrid } from "@/components/DataGrid";
+import { Table as TableIcon } from "lucide-react";
 
 export default function AnalysisPage() {
     const [data, setData] = useState<FinancialStatement | null>(null);
     const [warnings, setWarnings] = useState<string[]>([]);
+    const [showData, setShowData] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -92,6 +96,9 @@ export default function AnalysisPage() {
                 />
             </div>
 
+            {/* Financial Charts (Level 2 Upgrade) */}
+            <FinancialCharts data={{ success: true, data, warnings: [], errors: [] }} />
+
             {/* Main Analysis Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
@@ -154,6 +161,22 @@ export default function AnalysisPage() {
                 </div>
 
             </div>
+
+            <div className="flex justify-center pt-8">
+                <button
+                    onClick={() => setShowData(!showData)}
+                    className="flex items-center gap-2 px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-all text-sm font-medium"
+                >
+                    <TableIcon className="w-4 h-4" />
+                    {showData ? "Ocultar Datos Brutos" : "Ver Datos Extraídos"}
+                </button>
+            </div>
+
+            {showData && (
+                <div className="animate-in slide-in-from-bottom-4 duration-500">
+                    <DataGrid data={{ success: true, data, warnings: [], errors: [] }} />
+                </div>
+            )}
         </div>
     );
 }
