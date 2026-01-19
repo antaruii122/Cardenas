@@ -1,11 +1,16 @@
+"use client";
+
 import Link from "next/link";
-import { BarChart3, FileText, Home, PieChart, Settings } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { BarChart3, FileText, Home, PieChart, Settings, Activity } from "lucide-react";
 
 export default function DashboardLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    const pathname = usePathname();
+
     return (
         <div className="flex min-h-screen bg-background text-foreground">
             {/* Sidebar - Glassmorphism */}
@@ -18,14 +23,39 @@ export default function DashboardLayout({
                 </div>
 
                 <nav className="flex-1 px-4 flex flex-col gap-2 mt-4">
-                    <NavItem href="/dashboard" icon={<Home size={20} />} label="General" active />
-                    <NavItem href="/dashboard/analysis" icon={<BarChart3 size={20} />} label="Análisis Financiero" />
-                    <NavItem href="/dashboard/reports" icon={<FileText size={20} />} label="Reportes SII" />
-                    <NavItem href="/dashboard/improvements" icon={<PieChart size={20} />} label="Mejoramientos" />
+                    <NavItem
+                        href="/dashboard"
+                        icon={<Home size={20} />}
+                        label="General"
+                        active={pathname === "/dashboard"}
+                    />
+                    <NavItem
+                        href="/dashboard/analysis"
+                        icon={<BarChart3 size={20} />}
+                        label="Análisis Financiero"
+                        active={pathname === "/dashboard/analysis"}
+                    />
+                    <NavItem
+                        href="/dashboard/see"
+                        icon={<Activity size={20} />}
+                        label="Reportes S.E.E."
+                        active={pathname === "/dashboard/see"}
+                    />
+                    <NavItem
+                        href="/dashboard/improvements"
+                        icon={<PieChart size={20} />}
+                        label="Mejoramientos"
+                        active={pathname === "/dashboard/improvements"}
+                    />
                 </nav>
 
                 <div className="p-4 mt-auto border-t border-white/10">
-                    <NavItem href="/dashboard/settings" icon={<Settings size={20} />} label="Configuración" />
+                    <NavItem
+                        href="/dashboard/configuracion"
+                        icon={<Settings size={20} />}
+                        label="Configuración"
+                        active={pathname === "/dashboard/configuracion"}
+                    />
                     <div className="mt-4 px-4 py-3 rounded-lg bg-white/5 border border-white/5">
                         <p className="text-xs text-white/50">Plan Actual</p>
                         <p className="text-sm font-medium text-white/90">PYME Pro</p>
@@ -53,8 +83,8 @@ function NavItem({ href, icon, label, active = false }: { href: string; icon: Re
         <Link
             href={href}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${active
-                    ? "bg-primary/10 text-primary border border-primary/20 shadow-[0_0_15px_-5px_var(--color-primary)]"
-                    : "text-white/60 hover:text-white hover:bg-white/5"
+                ? "bg-primary/10 text-primary border border-primary/20 shadow-[0_0_15px_-5px_var(--color-primary)]"
+                : "text-white/60 hover:text-white hover:bg-white/5"
                 }`}
         >
             {icon}
