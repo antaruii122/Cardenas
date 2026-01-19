@@ -1,65 +1,86 @@
 import Image from "next/image";
+import { ArrowRight, BarChart3, PieChart, UploadCloud, TrendingUp, ShieldCheck } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen flex flex-col items-center justify-center p-8 sm:p-20 font-[family-name:var(--font-geist-sans)] relative overflow-hidden">
+
+      {/* Background Decorative Blobs */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div className="absolute top-[-10%] left-[20%] w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[20%] w-[400px] h-[400px] bg-success/10 rounded-full blur-[100px]" />
+      </div>
+
+      <main className="max-w-6xl w-full flex flex-col gap-16 items-center z-10">
+
+        {/* Hero Section */}
+        <div className="text-center flex flex-col items-center gap-6 mt-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+          <div className="px-4 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-sm font-medium text-primary-foreground/80 mb-4 inline-flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
+            Diseñado para Chile 🇨🇱
+          </div>
+
+          <h1 className="text-5xl sm:text-7xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60">
+            Tu Estado de Resultados,<br />
+            <span className="text-primary">Optimizado.</span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+
+          <p className="text-lg sm:text-xl text-white/60 max-w-2xl text-center leading-relaxed">
+            Sube tu Excel y recibe diagnósticos financieros estratégicos al instante.
+            Mejora tu liquidez y rentabilidad con inteligencia de mercado.
           </p>
+
+          <div className="flex gap-4 items-center mt-4">
+            <button className="group relative px-8 py-4 rounded-full bg-primary hover:bg-indigo-600 text-white font-semibold transition-all hover:scale-105 active:scale-95 shadow-[0_0_40px_-10px_rgba(99,102,241,0.5)]">
+              <span className="flex items-center gap-2">
+                Comenzar Análisis
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </span>
+            </button>
+            <button className="px-8 py-4 rounded-full border border-white/10 hover:bg-white/5 text-white/80 font-medium transition-all">
+              Ver Demo
+            </button>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Feature Grid (Glassmorphism) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mt-12">
+          <FeatureCard
+            icon={<UploadCloud className="w-6 h-6 text-primary" />}
+            title="Carga Simple"
+            description="Arrastra tu Excel. Nuestro motor normaliza tus datos contables automáticamente."
+          />
+          <FeatureCard
+            icon={<PieChart className="w-6 h-6 text-success" />}
+            title="Análisis Visual"
+            description="Dashboards interactivos que transforman filas de números en insights claros."
+          />
+          <FeatureCard
+            icon={<TrendingUp className="w-6 h-6 text-warning" />}
+            title="Mejoramientos"
+            description="Recibe acciones concretas para mejorar márgenes y salud financiera."
+          />
         </div>
+
       </main>
+
+      <footer className="mt-32 text-center text-white/30 text-sm">
+        <p>&copy; 2026 Antigravity Financial Tools. Built for ambitious PYMEs.</p>
+      </footer>
     </div>
   );
+}
+
+function FeatureCard({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
+  return (
+    <div className="glass-panel p-6 rounded-2xl flex flex-col gap-4 hover:bg-white/5 transition-colors cursor-default group">
+      <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+        {icon}
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold text-white/90 mb-2">{title}</h3>
+        <p className="text-sm text-white/50 leading-relaxed">{description}</p>
+      </div>
+    </div>
+  )
 }
