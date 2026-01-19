@@ -1,4 +1,11 @@
 // Core Financial Data Structure
+export interface RawRow {
+    category: string;
+    description: string;
+    amount: number;
+    rowNumber: number;
+}
+
 export interface FinancialStatement {
     metadata: {
         companyName?: string;
@@ -39,6 +46,7 @@ export interface FinancialStatement {
 export interface ParsingResult {
     success: boolean;
     data?: FinancialStatement;
+    rawItems: RawRow[];
     errors: string[];
     warnings: string[];
 }

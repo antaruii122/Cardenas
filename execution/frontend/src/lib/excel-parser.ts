@@ -1,22 +1,22 @@
 import * as XLSX from 'xlsx';
-import { FinancialStatement, ParsingResult } from './types';
-import { PNL_MAPPINGS } from './mappings';
+import { FinancialStatement, ParsingResult, RawRow } from './types';
+import { PNL_MAPPINGS, CATEGORY_MAPPINGS } from './mappings';
 
 /**
  * Main function to parse uploaded Excel file
+ * REFACTORED: Now captures ALL rows and uses Category Column (A) for aggregation
  */
 export async function parseFinancialExcel(file: File): Promise<ParsingResult> {
     try {
         const arrayBuffer = await file.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-
-        // Assume first sheet is the one
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
 
-        // Convert to array of arrays
+        // Get raw data
         const jsonData: (string | number)[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
+        // Initialize State
         const statement: FinancialStatement = {
             metadata: { currency: "CLP" },
             pnl: {
@@ -26,74 +26,121 @@ export async function parseFinancialExcel(file: File): Promise<ParsingResult> {
             }
         };
 
+        const rawItems: RawRow[] = [];
         const warnings: string[] = [];
+        let rowCount = 0;
 
-        // --- Extraction Logic ---
+        // --- Iteration Logic ---
         jsonData.forEach((row, index) => {
+            // Skip empty rows or header rows (simple heuristic: needs at least 2 cols)
             if (row.length < 2) return;
 
-            // Strategy: Detect Column 2 (Index 2) vs Column 1 (Index 1) for Value
-            // User Format: [Category, Item, Amount] -> Use Index 1 (Label) and Index 2 (Value)
-            // Standard Format: [Item, Amount] -> Use Index 0 (Label) and Index 1 (Value)
+            // Normalize Columns
+            // Column 0: Category (e.g. "Ingresos", "Gastos Oper.")
+            // Column 1: Item Name (e.g. "Ventas", "Sueldos")
+            // Column 2: Amount (or invalid)
 
-            let labelRaw = "";
-            let valueRaw: any = 0;
+            const rawCol0 = String(row[0] || "").trim();
+            const rawCol1 = String(row[1] || "").trim();
+            const rawCol2 = row[2];
 
-            const col2 = row[2]; // Potential Value in 3-col layout
-            const col1 = row[1]; // Potential Value in 2-col layout or Label in 3-col
+            // 1. Determine Layout (2-col vs 3-col)
+            // If col2 is numeric, it's likely [Category, Item, Value]
+            // If not, it might be [Item, Value] (Old user format)
 
-            // Check if 3rd column looks like a number/currency
-            const isCol2Numeric = isNumeric(col2);
+            let category = "";
+            let description = "";
+            let amountRaw: any = 0;
+            let isThreeCol = false;
 
-            if (row.length >= 3 && isCol2Numeric) {
-                // assume 3-column layout
-                labelRaw = String(col1 || "");
-                valueRaw = col2;
+            if (isNumeric(rawCol2)) {
+                // 3-Column Layout
+                category = rawCol0;
+                description = rawCol1;
+                amountRaw = rawCol2;
+                isThreeCol = true;
+            } else if (isNumeric(rawCol1)) {
+                // 2-Column Layout (fallback)
+                category = "General"; // No category info
+                description = rawCol0;
+                amountRaw = rawCol1;
             } else {
-                // assume 2-column layout
-                labelRaw = String(row[0] || "");
-                valueRaw = col1;
+                return; // Skip non-data row
             }
 
-            const label = labelRaw.toLowerCase().trim();
-            const value = cleanValue(valueRaw);
+            const amount = cleanValue(amountRaw);
+            if (isNaN(amount) || amount === 0) return; // Skip zero rows if preferred, or keep them. Let's skip strict 0s
 
-            if (isNaN(value)) return;
+            // 2. Store Raw Data (For DataGrid)
+            rawItems.push({
+                rowNumber: index + 1,
+                category,
+                description,
+                amount
+            });
+            rowCount++;
 
-            // Simple Matcher
-            if (matches(label, PNL_MAPPINGS.revenue)) statement.pnl.revenue += value;
-            else if (matches(label, PNL_MAPPINGS.cogs)) statement.pnl.cogs += value; // Accumulate in case of multiple rows
-            else if (matches(label, PNL_MAPPINGS.grossProfit)) statement.pnl.grossProfit = value; // Usually a subtotal line
-            else if (matches(label, PNL_MAPPINGS.opEx)) statement.pnl.opEx += value;
-            else if (matches(label, PNL_MAPPINGS.operatingProfit)) statement.pnl.operatingProfit = value;
-            else if (matches(label, PNL_MAPPINGS.netIncome)) statement.pnl.netIncome = value;
+            // 3. Smart Aggregation (The "Brain")
+            const catLower = category.toLowerCase();
+            const descLower = description.toLowerCase();
+
+            let matched = false;
+
+            // Priority A: Category Mapping (Aggregates unknown items into correct bucket)
+            if (matches(catLower, CATEGORY_MAPPINGS.revenue)) {
+                statement.pnl.revenue += amount;
+                matched = true;
+            } else if (matches(catLower, CATEGORY_MAPPINGS.cogs)) {
+                statement.pnl.cogs += Math.abs(amount); // COGS usually expenses
+                matched = true;
+            } else if (matches(catLower, CATEGORY_MAPPINGS.opEx)) {
+                statement.pnl.opEx += Math.abs(amount); // Expenses are positive in P&L structure usually (Revenue - Exp)
+                matched = true;
+            }
+
+            // Priority B: Specific Item Mapping (Overwrites or handles specifics like Start/End lines)
+            // Specific overrides generic. E.g. "Utilidad Bruta" line is not added, just recorded.
+
+            if (matches(descLower, PNL_MAPPINGS.grossProfit)) {
+                statement.pnl.grossProfit = amount;
+                // Don't mark as 'matched' for addition if it's a subtotal line we just captured
+                // Actually, if we are building bottom up, we calculate Gross ourselves.
+                // But capturing the Read value is good for sanity check.
+            }
+            else if (matches(descLower, PNL_MAPPINGS.operatingProfit)) statement.pnl.operatingProfit = amount;
+            else if (matches(descLower, PNL_MAPPINGS.netIncome)) statement.pnl.netIncome = amount;
+            else if (matches(descLower, PNL_MAPPINGS.taxes)) statement.pnl.taxes += Math.abs(amount);
+
+            // Priority C: Fallback for 2-column or unknown categories using Descriptions
+            if (!matched && !isThreeCol) {
+                if (matches(descLower, PNL_MAPPINGS.revenue)) statement.pnl.revenue += amount;
+                else if (matches(descLower, PNL_MAPPINGS.cogs)) statement.pnl.cogs += Math.abs(amount);
+                else if (matches(descLower, PNL_MAPPINGS.opEx)) statement.pnl.opEx += Math.abs(amount);
+            }
         });
 
-        // --- Validation Logic (Sanity Check) ---
-        // 1. Gross Profit Check
-        const calculatedGross = statement.pnl.revenue - statement.pnl.cogs;
-        // If we accumulated COGS as positive numbers (common in some excels), but formula expects subtraction
-        // We need to be smart. Usually COGS are expenses.
-        // Let's ensure COGS is positive magnitude for the math: Gross = Rev - COGS
-        // But if user put negative numbers for COGS, we should handle that.
+        // --- Post-Calculation & Validation ---
 
-        // Normalize COGS to be positive magnitude for calculation if it was read as negative
-        // actually standard P&L math: Revenue (pos) - COGS (pos) = Gross. 
-        // If Excel had negative numbers for COGS, 'statement.pnl.cogs' is negative.
-        // Let's assume absolute values for the check logic to be safe or blindly trust the math?
-        // Better: Trust the math but warn.
+        // If we summed up components, let's recalculate totals to be sure
+        const calcGross = statement.pnl.revenue - statement.pnl.cogs;
+        const calcOp = calcGross - statement.pnl.opEx;
 
-        if (statement.pnl.grossProfit === 0 && calculatedGross !== 0) {
-            statement.pnl.grossProfit = calculatedGross; // Auto-fill if missing
+        // Auto-fill if missing (e.g. didn't find "Margen Bruto" line)
+        if (statement.pnl.grossProfit === 0) statement.pnl.grossProfit = calcGross;
+        if (statement.pnl.operatingProfit === 0) statement.pnl.operatingProfit = calcOp;
+
+        // Warnings
+        if (statement.pnl.revenue === 0) warnings.push("No pudimos detectar Ingresos.");
+        if (statement.pnl.netIncome === 0) {
+            // Fallback: If we have OpProfit but no Net Income line, maybe Net = OpProfit - Tax?
+            // statement.pnl.netIncome = statement.pnl.operatingProfit - statement.pnl.taxes;
+            warnings.push("No se encontró 'Utilidad Neta'.");
         }
 
-        // 2. Critical Fields Check
-        if (statement.pnl.revenue === 0) warnings.push("No se encontró 'Ingresos de Explotación' o similar.");
-        if (statement.pnl.netIncome === 0) warnings.push("No se encontró 'Utilidad Neta' o similar.");
-
         return {
-            success: warnings.length === 0 || statement.pnl.revenue > 0, // Success if we at least found revenue
+            success: rowCount > 0,
             data: statement,
+            rawItems,
             errors: [],
             warnings
         };
@@ -101,15 +148,19 @@ export async function parseFinancialExcel(file: File): Promise<ParsingResult> {
     } catch (error) {
         return {
             success: false,
+            data: undefined,
+            rawItems: [],
             errors: [(error as Error).message],
             warnings: []
         };
     }
 }
 
-// Helper to check fuzzy match
-function matches(label: string, validAliases: string[]): boolean {
-    return validAliases.some(alias => label.includes(alias) || alias.includes(label));
+// --- Helpers ---
+
+function matches(text: string, aliases: string[]): boolean {
+    if (!aliases) return false;
+    return aliases.some(alias => text.includes(alias) || alias.includes(text));
 }
 
 function cleanValue(val: any): number {
@@ -117,31 +168,19 @@ function cleanValue(val: any): number {
     if (!val) return 0;
 
     let str = String(val).trim();
-
-    // Check for Accounting format: (100) -> -100
+    // Accounting format usually: (123) for negative
     const isNegative = str.startsWith('(') && str.endsWith(')');
 
-    // Remove all non-numeric chars except minus and dot (and maybe comma if European)
-    // Assuming CLP format often uses dots for thousands. 
-    // We want to remove dots, keep numeric, allow minus.
+    if (isNegative) str = str.replace(/[()]/g, '');
 
-    // Remove "parentheses" if accounting
-    if (isNegative) {
-        str = str.replace(/[()]/g, '');
-    }
+    // Remove all non-digits/dots/commas/minus
+    // Handle "$ 1.200.000" (CLP) -> 1200000
+    // Handle "1,200.00" (USD sometimes) -> Logic below assumes CLP standard
 
-    // Remove currency symbols and dots (thousands separators in CLP)
-    // Be careful with decimals. CLP usually doesn't have cents in these reports, but if it does usually comma.
-    // Safety: Remove everything that is NOT 0-9, -, or , (if decimal)
-    // Actually, simple regex: remove anything that isn't a digit or a minus sign.
-    // If there is a decimal comma, replace it with dot?
-    // Let's assume standard "CLP $10.000.000" -> remove '$' and '.'
-
-    str = str.replace(/[^0-9,-]/g, ''); // Keep digits, comma, minus
-    str = str.replace(',', '.'); // Convert decimal comma to dot
+    str = str.replace(/[^0-9,-]/g, '');
+    str = str.replace(',', '.'); // Comma to dot
 
     let num = parseFloat(str);
-
     if (isNegative) num = -num;
 
     return isNaN(num) ? 0 : num;
@@ -150,7 +189,6 @@ function cleanValue(val: any): number {
 function isNumeric(val: any): boolean {
     if (typeof val === 'number') return true;
     if (!val) return false;
-    // Check if cleaning it results in a valid number that isn't 0 (unless it's literally 0)
-    // Heuristic: Does it have digits?
+    // Must contain digits
     return /[0-9]/.test(String(val));
 }

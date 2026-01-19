@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FinancialStatement } from "@/lib/types";
+import { FinancialStatement, RawRow } from "@/lib/types";
 import { ArrowUpRight, ArrowDownRight, TrendingUp, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 import { useRouter } from "next/navigation";
@@ -11,6 +11,7 @@ import { Table as TableIcon } from "lucide-react";
 
 export default function AnalysisPage() {
     const [data, setData] = useState<FinancialStatement | null>(null);
+    const [rawItems, setRawItems] = useState<RawRow[]>([]);
     const [warnings, setWarnings] = useState<string[]>([]);
     const [showData, setShowData] = useState(false);
     const router = useRouter();
@@ -18,6 +19,7 @@ export default function AnalysisPage() {
     useEffect(() => {
         // Load from local storage (Provisional for MVP)
         const storedData = localStorage.getItem("financialData");
+        const storedRawItems = localStorage.getItem("financialRawItems");
         const storedWarnings = localStorage.getItem("financialWarnings");
 
         if (storedData) {
@@ -25,6 +27,10 @@ export default function AnalysisPage() {
         } else {
             // No data found -> Redirect to upload
             router.push("/dashboard");
+        }
+
+        if (storedRawItems) {
+            setRawItems(JSON.parse(storedRawItems));
         }
 
         if (storedWarnings) setWarnings(JSON.parse(storedWarnings));
@@ -97,7 +103,7 @@ export default function AnalysisPage() {
             </div>
 
             {/* Financial Charts (Level 2 Upgrade) */}
-            <FinancialCharts data={{ success: true, data, warnings: [], errors: [] }} />
+            <FinancialCharts data={{ success: true, data, rawItems, warnings: [], errors: [] }} />
 
             {/* Main Analysis Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -174,7 +180,7 @@ export default function AnalysisPage() {
 
             {showData && (
                 <div className="animate-in slide-in-from-bottom-4 duration-500">
-                    <DataGrid data={{ success: true, data, warnings: [], errors: [] }} />
+                    <DataGrid data={{ success: true, data, rawItems, warnings: [], errors: [] }} />
                 </div>
             )}
         </div>

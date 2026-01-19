@@ -55,6 +55,14 @@ export const PNL_MAPPINGS: Record<string, string[]> = {
     ]
 };
 
+// Broad Category Mappings (Column A triggers)
+export const CATEGORY_MAPPINGS: Record<string, string[]> = {
+    revenue: ["ingresos"],
+    cogs: ["costos", "costo", "costos (cogs)"],
+    opEx: ["gastos", "gastos oper.", "gastos operativos", "gastos de administración"],
+    other: ["no operacionales", "otros"]
+};
+
 export const IGNORED_TERMS = [
     "total", // Often redundant if not specific
     "suma"

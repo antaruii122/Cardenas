@@ -23,6 +23,7 @@ export function UploadZone() {
         if (result.success && result.data) {
             // PROVISIONAL: Save to localStorage for MVP
             localStorage.setItem("financialData", JSON.stringify(result.data));
+            localStorage.setItem("financialRawItems", JSON.stringify(result.rawItems)); // Save Raw Items
             localStorage.setItem("financialWarnings", JSON.stringify(result.warnings));
             router.push("/dashboard/analysis");
         } else {

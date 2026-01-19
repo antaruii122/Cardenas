@@ -13,44 +13,33 @@ interface DataGridProps {
 }
 
 export function DataGrid({ data }: DataGridProps) {
-    if (!data || !data.success || !data.data) return null;
+    if (!data || !data.success || !data.rawItems) return null;
 
-    const { pnl } = data.data;
-
-    const rows = [
-        { label: "Ingresos de Explotación", value: pnl.revenue },
-        { label: "Costo de Ventas", value: pnl.cogs },
-        { label: "Margen Bruto", value: pnl.grossProfit, highlight: true },
-        { label: "Gastos de Adm. y Ventas", value: pnl.opEx },
-        { label: "Resultado Operacional", value: pnl.operatingProfit, highlight: true },
-        { label: "Otros Ingresos", value: pnl.otherIncome },
-        { label: "Otros Gastos", value: pnl.otherExpenses },
-        { label: "Gastos Financieros", value: pnl.interestExpense },
-        { label: "Impuestos", value: pnl.taxes },
-        { label: "Depreciación", value: pnl.depreciation },
-        { label: "Amortización", value: pnl.amortization },
-        { label: "Utilidad Neta", value: pnl.netIncome, highlight: true },
-    ];
+    const { rawItems } = data;
 
     return (
-        <div className="rounded-md border border-white/10 bg-black/20 backdrop-blur-sm p-6 mt-6">
-            <h3 className="text-xl font-bold mb-4 text-white">Detalle de Datos Extraídos</h3>
-            <div className="rounded-md border border-white/10 overflow-hidden">
+        <div className="rounded-md border border-white/10 bg-black/20 backdrop-blur-sm p-6 mt-6 animate-in slide-in-from-bottom-2">
+            <h3 className="text-xl font-bold mb-4 text-white">Detalle de Datos Extraídos ({rawItems.length} filas)</h3>
+            <div className="rounded-md border border-white/10 overflow-hidden max-h-[500px] overflow-y-auto">
                 <Table>
-                    <TableHeader className="bg-white/5">
+                    <TableHeader className="bg-white/5 sticky top-0 backdrop-blur-md z-10">
                         <TableRow className="hover:bg-transparent border-white/10">
-                            <TableHead className="text-gray-300">Concepto</TableHead>
-                            <TableHead className="text-right text-gray-300">Valor (CLP)</TableHead>
+                            <TableHead className="text-gray-300 w-[150px]">Categoría</TableHead>
+                            <TableHead className="text-gray-300">Ítem / Descripción</TableHead>
+                            <TableHead className="text-right text-gray-300">Monto</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {rows.map((row) => (
-                            <TableRow key={row.label} className="hover:bg-white/5 border-white/5">
-                                <TableCell className={`font-medium ${row.highlight ? 'text-blue-400' : 'text-gray-200'}`}>
-                                    {row.label}
+                        {rawItems.map((row, i) => (
+                            <TableRow key={i} className="hover:bg-white/5 border-white/5">
+                                <TableCell className="text-gray-400 font-medium text-xs uppercase tracking-wider">
+                                    {row.category || "-"}
                                 </TableCell>
-                                <TableCell className="text-right text-gray-200 font-mono">
-                                    {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(row.value)}
+                                <TableCell className="text-gray-200">
+                                    {row.description}
+                                </TableCell>
+                                <TableCell className={`text-right font-mono ${row.amount < 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                                    {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(row.amount)}
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -58,7 +47,7 @@ export function DataGrid({ data }: DataGridProps) {
                 </Table>
             </div>
             <p className="text-xs text-gray-500 mt-4">
-                * Estos datos han sido extraídos automáticamente de su archivo Excel.
+                * Visualizando {rawItems.length} registros detectados en su archivo Excel.
             </p>
         </div>
     );
