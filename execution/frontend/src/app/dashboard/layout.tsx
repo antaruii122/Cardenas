@@ -47,6 +47,9 @@ export default function DashboardLayout({
                         label="Mejoramientos"
                         active={pathname === "/dashboard/improvements"}
                     />
+                    <div className="pt-4 mt-4 border-t border-white/10">
+                        <NavItem href="/" icon={<Home size={20} />} label="Volver al Inicio" />
+                    </div>
                 </nav>
 
                 <div className="p-4 mt-auto border-t border-white/10">

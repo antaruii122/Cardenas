@@ -37,6 +37,35 @@ export default function Home() {
           />
         </div>
 
+        {/* New Section: The 4 Pillars of Financial Analysis */}
+        <div className="w-full mt-24">
+          <h2 className="text-3xl font-bold text-center text-white mb-16">
+            ¿Por qué analizar tu Estado de Resultados?
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <BenefitItem
+              number="01"
+              title="Evaluación de Rentabilidad"
+              desc="No se trata de cuánto vendes, sino de cuánto te queda. Identifica tus márgenes reales y la viabilidad de tu modelo."
+            />
+            <BenefitItem
+              number="02"
+              title="Decisiones Estratégicas"
+              desc="Deja de adivinar. Usa datos duros para decidir si contratar, invertir o recortar gastos."
+            />
+            <BenefitItem
+              number="03"
+              title="Detección de Riesgos"
+              desc="Alerta temprana de costos crecientes o ineficiencias operativas antes de que sean críticas."
+            />
+            <BenefitItem
+              number="04"
+              title="Acceso a Financiamiento"
+              desc="Los bancos invierten en números, no en entusiasmo. Un reporte sólido es tu pasaporte al capital."
+            />
+          </div>
+        </div>
+
       </main>
 
       <footer className="mt-32 text-center text-white/30 text-sm">
@@ -55,6 +84,18 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode, titl
       <div>
         <h3 className="text-lg font-semibold text-white/90 mb-2">{title}</h3>
         <p className="text-sm text-white/50 leading-relaxed">{description}</p>
+      </div>
+    </div>
+  )
+}
+
+function BenefitItem({ number, title, desc }: { number: string, title: string, desc: string }) {
+  return (
+    <div className="flex gap-6 items-start">
+      <div className="text-4xl font-black text-white/10 font-mono">{number}</div>
+      <div>
+        <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+        <p className="text-white/60 leading-relaxed">{desc}</p>
       </div>
     </div>
   )
