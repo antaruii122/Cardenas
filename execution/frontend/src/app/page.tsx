@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { ArrowRight, BarChart3, PieChart, UploadCloud, TrendingUp, ShieldCheck } from "lucide-react";
 
 export default function Home() {
