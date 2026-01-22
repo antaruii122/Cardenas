@@ -17,7 +17,6 @@ export function DataVerificationPanel({ report }: Props) {
     const rowCount = report.rawRows.length;
 
     return (
-    return (
         <div className="relative">
             {/* Header / Summary */}
             <button
