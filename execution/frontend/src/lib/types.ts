@@ -62,7 +62,8 @@ export interface FinancialStatement {
         liquidity?: any;
         leverage?: any;
         efficiency?: any;
-    }
+    };
+    unmapped?: Array<{ description: string; value: number }>; // For AI Analysis
 }
 
 export interface FinancialReport {

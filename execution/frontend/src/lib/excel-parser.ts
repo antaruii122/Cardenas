@@ -331,6 +331,12 @@ function addToStatement(stmt: FinancialStatement, desc: string, val: number) {
     else if (matches(desc, ["patrimonio", "capital"])) stmt.balanceSheet.shareholdersEquity = val;
     else if (matches(desc, ["inventario", "existencias"])) stmt.balanceSheet.inventory = val;
     else if (matches(desc, ["cuentas por cobrar", "deudores"])) stmt.balanceSheet.accountsReceivable = val;
+
+    // Capture UNMAPPED rows for AI Analysis
+    else {
+        if (!stmt.unmapped) stmt.unmapped = [];
+        stmt.unmapped.push({ description: desc, value: val });
+    }
 }
 
 function calculateDerivedMetrics(stmt: FinancialStatement) {
