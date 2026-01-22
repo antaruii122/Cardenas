@@ -1,6 +1,6 @@
 "use client"
 
-import { ParsingResult } from "@/lib/types";
+import { FinancialReport } from "@/lib/types";
 import {
     BarChart,
     Bar,
@@ -16,15 +16,20 @@ import {
 } from 'recharts';
 
 interface FinancialChartsProps {
-    data: ParsingResult | null;
+    data: FinancialReport | null;
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#a855f7', '#ec4899'];
 
 export function FinancialCharts({ data }: FinancialChartsProps) {
-    if (!data || !data.success || !data.data) return null;
+    if (!data || !data.statements || data.statements.length === 0) return null;
 
-    const { pnl } = data.data;
+    // Use the most recent period for charts
+    const sortedStatements = [...data.statements].sort((a, b) =>
+        a.metadata.period.localeCompare(b.metadata.period)
+    );
+    const currentStatement = sortedStatements[sortedStatements.length - 1];
+    const { pnl } = currentStatement;
 
     // Data for Bar Chart: Margins
     const marginData = [
@@ -43,7 +48,7 @@ export function FinancialCharts({ data }: FinancialChartsProps) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div className="bg-black/20 border border-white/10 rounded-xl p-4 backdrop-blur-sm">
-                <h3 className="text-white font-semibold mb-4 text-center">Resultados Clave</h3>
+                <h3 className="text-white font-semibold mb-4 text-center">Resultados Clave ({currentStatement.metadata.period})</h3>
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={marginData}>
