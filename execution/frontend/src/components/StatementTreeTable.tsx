@@ -1,54 +1,53 @@
-
 "use client";
-
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { formatCLP, formatPercentDecimal } from "@/lib/formatters";
+import { FinancialStatement } from "@/lib/types";
 
 interface Props {
     title: string;
-    // Data structure: Array of objects { label, values: [valYear1, valYear2], children?: [] }
-    // But we need a simpler prop API.
-    // Let's pass the "Year Columns" and the "Data Rows".
-    periods: string[];
-    rows: TreeRowData[];
+    statements: FinancialStatement[];
 }
 
-export interface TreeRowData {
-    id: string;
-    label: string;
-    values: number[]; // Matches periods index
-    isTotal?: boolean; // Bold styling
-    isNegative?: boolean; // Red text styling (e.g. costs)
-    children?: TreeRowData[];
-}
+export function StatementTreeTable({ title, statements }: Props) {
+    // 1. Sort statements by period
+    const sorted = [...statements].sort((a, b) => a.metadata.period.localeCompare(b.metadata.period));
+    const periods = sorted.map(s => s.metadata.period);
 
-export function StatementTreeTable({ title, periods, rows }: Props) {
+    // 2. Define Rows
+    const rows = [
+        { id: "rev", label: "Ingresos de Explotación", values: sorted.map(s => s.pnl.revenue), isTotal: true },
+        { id: "cogs", label: "Costo de Ventas", values: sorted.map(s => -Math.abs(s.pnl.cogs)), isNegative: true },
+        { id: "gross", label: "Utilidad Bruta", values: sorted.map(s => s.pnl.grossProfit), isTotal: true, isBold: true },
+        { id: "opex", label: "Gastos de Adm. y Ventas", values: sorted.map(s => -Math.abs(s.pnl.opEx)), isNegative: true },
+        { id: "op_res", label: "Resultado Operacional", values: sorted.map(s => s.pnl.operatingProfit), isTotal: true, isBold: true },
+        { id: "tax_int", label: "Intereses e Impuestos", values: sorted.map(s => -(s.pnl.taxes + s.pnl.interestExpense)), isNegative: true },
+        { id: "net", label: "Utilidad Neta", values: sorted.map(s => s.pnl.netIncome), isTotal: true, isBold: true, isHighlight: true }
+    ];
+
     return (
-        <div className="bg-white border border-neutral-200 rounded-xl shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-neutral-100 bg-neutral-50/50">
-                <h3 className="font-semibold text-neutral-800">{title}</h3>
+        <div className="w-full">
+            <div className="px-6 py-4 border-b border-white/5 flex justify-between items-center">
+                <h3 className="font-medium text-white">{title}</h3>
+                <span className="text-xs text-gray-500 uppercase tracking-widest">{statements.length} Periodos</span>
             </div>
 
             <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                     <thead>
-                        <tr className="text-neutral-500 border-b border-neutral-100">
+                        <tr className="text-gray-500 border-b border-white/5">
                             <th className="px-6 py-3 text-left font-medium w-1/3">Concepto</th>
-                            {periods.map((p, i) => (
-                                <th key={p} className="px-6 py-3 text-right font-medium">
-                                    {p}
-                                    {/* Comparison Header Logic could go here */}
-                                </th>
+                            {periods.map((p) => (
+                                <th key={p} className="px-6 py-3 text-right font-medium">{p}</th>
                             ))}
-                            {periods.length === 2 && (
+                            {periods.length >= 2 && (
                                 <th className="px-6 py-3 text-right font-medium">Var %</th>
                             )}
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-neutral-50">
+                    <tbody className="divide-y divide-white/5">
                         {rows.map(row => (
-                            <TreeRow key={row.id} row={row} depth={0} periods={periods} />
+                            <TreeRow key={row.id} row={row} periods={periods} />
                         ))}
                     </tbody>
                 </table>
@@ -57,59 +56,36 @@ export function StatementTreeTable({ title, periods, rows }: Props) {
     );
 }
 
-function TreeRow({ row, depth, periods }: { row: TreeRowData, depth: number, periods: string[] }) {
-    const [expanded, setExpanded] = useState(true);
-    const hasChildren = row.children && row.children.length > 0;
-
-    // Calc Variance for 2 periods
+function TreeRow({ row, periods }: { row: any, periods: string[] }) {
+    // Only 2 period variance supported for simplified view
     let variance = null;
-    if (periods.length === 2) {
-        const v1 = row.values[1]; // Recent
-        const v0 = row.values[0]; // Previous
-        // Avoid div by zero
-        if (v0 !== 0) {
-            variance = ((v1 - v0) / Math.abs(v0)) * 100;
+    if (periods.length >= 2) {
+        const curr = row.values[row.values.length - 1];
+        const prev = row.values[row.values.length - 2];
+        if (prev !== 0) {
+            variance = ((curr - prev) / Math.abs(prev)) * 100;
         }
     }
 
     return (
-        <>
-            <tr className={`group transition-colors ${row.isTotal ? "bg-neutral-50/80 font-semibold" : "hover:bg-neutral-50"}`}>
-                <td className="px-6 py-3">
-                    <div
-                        className="flex items-center gap-2 cursor-pointer"
-                        style={{ paddingLeft: `${depth * 20}px` }}
-                        onClick={() => hasChildren && setExpanded(!expanded)}
-                    >
-                        {hasChildren ? (
-                            expanded ? <ChevronDown size={14} className="text-neutral-400" /> : <ChevronRight size={14} className="text-neutral-400" />
-                        ) : (
-                            <div className="w-3.5" /> // Spacer
-                        )}
-                        <span className={`${row.isTotal ? "text-neutral-900" : "text-neutral-700"}`}>
-                            {row.label}
-                        </span>
-                    </div>
+        <tr className={`group transition-colors border-white/5 hover:bg-white/5 ${row.isHighlight ? "bg-white/5" : ""}`}>
+            <td className="px-6 py-3">
+                <span className={`${row.isBold ? "text-white font-medium" : "text-gray-400"} ${row.isTotal ? "text-gray-200" : ""}`}>
+                    {row.label}
+                </span>
+            </td>
+
+            {row.values.map((val: number, idx: number) => (
+                <td key={idx} className={`px-6 py-3 text-right font-mono tracking-tight ${row.isBold ? "text-white" : "text-gray-300"} ${row.isNegative ? "text-rose-400" : ""}`}>
+                    {formatCLP(val)}
                 </td>
-
-                {row.values.map((val, idx) => (
-                    <td key={idx} className={`px-6 py-3 text-right font-mono ${row.isTotal ? "text-neutral-900" : "text-neutral-600"} ${row.isNegative ? "text-red-500" : ""}`}>
-                        {formatCLP(val)}
-                    </td>
-                ))}
-
-                {variance !== null && (
-                    <td className="px-6 py-3 text-right">
-                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${variance >= 0 ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
-                            {variance > 0 ? "+" : ""}{formatPercentDecimal(variance)}
-                        </span>
-                    </td>
-                )}
-            </tr>
-
-            {hasChildren && expanded && row.children!.map(child => (
-                <TreeRow key={child.id} row={child} depth={depth + 1} periods={periods} />
             ))}
-        </>
+
+            {variance !== null && (
+                <td className={`px-6 py-3 text-right font-medium ${variance > 0 ? (row.isNegative ? 'text-rose-400' : 'text-emerald-400') : (row.isNegative ? 'text-emerald-400' : 'text-rose-400')}`}>
+                    {isFinite(variance) ? `${variance > 0 ? '+' : ''}${variance.toFixed(1)}%` : '-'}
+                </td>
+            )}
+        </tr>
     )
 }
