@@ -9,7 +9,8 @@ export const PNL_MAPPINGS: Record<string, string[]> = {
         "ingresos operacionales",
         "facturación",
         "total ingresos",
-        "total ventas"
+        "total ventas",
+        "ingresos ordinarios" // Added for user
     ],
     cogs: [
         "costo de ventas",
@@ -18,7 +19,8 @@ export const PNL_MAPPINGS: Record<string, string[]> = {
         "costo de mercadería vendida",
         "cmv",
         "costos directos",
-        "costo directo"
+        "costo directo",
+        "costos operacionales" // Added for user
     ],
     grossProfit: [
         "utilidad bruta",
@@ -51,7 +53,22 @@ export const PNL_MAPPINGS: Record<string, string[]> = {
         "utilidad del ejercicio",
         "ganancia (pérdida) del periodo",
         "resultado del periodo",
-        "resultado neto"
+        "resultado neto",
+        "utilidad del año", // Added for user
+        "ganancia del año"
+    ],
+    otherIncome: [
+        "otros ingresos",
+        "ingresos financieros",
+        "diferencias de cambio",
+        "otros egresos", // Map mixed fields here for now
+        "ingresos no operacionales"
+    ],
+    taxes: [
+        "impuesto a las ganancias",
+        "impuesto a la renta",
+        "gasto por impuesto",
+        "ingreso por impuesto"
     ]
 };
 
