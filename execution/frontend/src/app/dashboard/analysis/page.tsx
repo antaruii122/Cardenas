@@ -224,12 +224,12 @@ export default function AnalysisPage() {
                 {/* Sticky Sub-Navigation (The "Top" requested by user) */}
                 <div className="sticky top-0 z-40 -mx-6 px-6 bg-[#0B0F17]/95 backdrop-blur-md border-b border-white/5 py-3 mb-6 flex items-center gap-6 text-sm font-medium">
                     <a href="#summary" className="text-gray-400 hover:text-white transition-colors">Resumen Ejecutivo</a>
-                    <a href="#ratios" className="text-gray-400 hover:text-white transition-colors">Ratios Estratégicos</a>
                     <a href="#table" className="text-gray-400 hover:text-white transition-colors">Estado de Resultados</a>
+                    <a href="#ratios" className="text-gray-400 hover:text-white transition-colors">Ratios Estratégicos</a>
                 </div>
 
                 {/* AI Executive Summary */}
-                <div id="summary" className="scroll-mt-32 relative overflow-hidden rounded-2xl bg-[#151B26] border border-white/5 p-6 shadow-2xl">
+                <div id="summary" className="scroll-mt-32 relative overflow-hidden rounded-2xl bg-[#151B26] border border-white/5 p-6 shadow-2xl mb-6">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
                     <div className="flex gap-6 items-start relative z-10">
                         <div className="p-3 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-xl border border-white/10 shrink-0">
@@ -244,10 +244,15 @@ export default function AnalysisPage() {
                     </div>
                 </div>
 
-                {/* Bento Grid layout */}
+                {/* 1. The "Clay" Table (Full Width) - MOVED TO TOP as per user request */}
+                <div id="table" className="scroll-mt-32 mb-6">
+                    <ClayTable statements={report.statements} title="Estado de Resultados Consolidado" />
+                </div>
+
+                {/* 2. Strategic Ratios & Actions Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-20">
 
-                    {/* Top Row: Strategic Ratios (Full Width or 8 cols) */}
+                    {/* Strategic Ratios (Full Width or 8 cols) */}
                     <div id="ratios" className="scroll-mt-32 lg:col-span-8 h-[450px]">
                         <StrategicRatiosPanel statement={current} />
                     </div>
@@ -276,11 +281,6 @@ export default function AnalysisPage() {
                                 <ArrowUpRight size={16} className="text-blue-300" />
                             </div>
                         </div>
-                    </div>
-
-                    {/* Bottom: The "Clay" Table (Full Width) */}
-                    <div id="table" className="scroll-mt-32 lg:col-span-12">
-                        <ClayTable statements={report.statements} title="Estado de Resultados Consolidado" />
                     </div>
                 </div>
             </div>
