@@ -144,10 +144,25 @@ function detectHeaders(grid: any[][]): { headerRowIndex: number, periodMap: Map<
             // Extract date patterns: 31/Oct/2025, 31-Oct-2025, 31/10/2025, etc.
             const dateMatch = valStr.match(/\d{1,2}[\\/\-](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|[A-Za-z]{3}|\d{1,2})[\\/\-]\d{2,4}/i);
 
-            if (yearMatch || dateMatch) {
+            // DETECT EXCEL SERIAL DATES (e.g. 45596 = 2024, 45961 = 2025)
+            // Range 43831 (2020) to roughly 47696 (2030)
+            const numVal = parseFloat(valStr);
+            const isSerialDate = !isNaN(numVal) && numVal > 43000 && numVal < 48000;
+
+            if (yearMatch || dateMatch || isSerialDate) {
                 // Use the FULL cell value as the period key (e.g., "31/Oct/2025 M$")
                 // But clean it slightly for display
-                const periodKey = valStr.replace(/\s*M\$\s*/gi, '').trim() || valStr;
+                let periodKey = valStr.replace(/\s*M\$\s*/gi, '').trim() || valStr;
+
+                if (isSerialDate) {
+                    // Convert Serial to Date
+                    // Excel base date is Dec 30 1899
+                    const excelEpoch = new Date(1899, 11, 30);
+                    const dateObj = new Date(excelEpoch.getTime() + numVal * 86400000);
+                    // Format: DD/MM/YYYY
+                    periodKey = dateObj.toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric" });
+                }
+
                 map.set(periodKey, colIdx);
                 foundDate = true;
             }
