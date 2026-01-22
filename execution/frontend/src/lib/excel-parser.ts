@@ -341,8 +341,45 @@ function addToStatement(stmt: FinancialStatement, desc: string, val: number) {
 
 function calculateDerivedMetrics(stmt: FinancialStatement) {
     const p = stmt.pnl;
-    // Recalculate if totals are 0 but components exist
+    const b = stmt.balanceSheet;
+
+    // 1. Core Logic Recalculation (if totals missing)
     if (p.grossProfit === 0 && p.revenue !== 0) p.grossProfit = p.revenue + p.cogs; // COGS is negative
-    if (p.operatingProfit === 0 && p.grossProfit !== 0) p.operatingProfit = p.grossProfit + p.opEx; // OpEx is negative
-    // ...
+    if (p.operatingProfit === 0 && p.grossProfit !== 0) p.operatingProfit = p.grossProfit + p.opEx;
+
+    // Net Income fallback
+    if (p.netIncome === 0 && p.operatingProfit !== 0) {
+        p.netIncome = p.operatingProfit + p.otherIncome + p.otherExpenses + p.taxes + p.interestExpense;
+    }
+
+    // 2. EBITDA Calculation
+    // Try to find Depreciation in Unmapped if not explicit
+    if (p.depreciation === 0 && stmt.unmapped) {
+        stmt.unmapped.forEach(item => {
+            const lower = item.description.toLowerCase();
+            if (lower.includes("depreciacion") || lower.includes("amortizacion")) {
+                p.depreciation += Math.abs(item.value); // Usually an expense, so add back positive
+            }
+        });
+    }
+    p.ebitda = p.operatingProfit + p.depreciation + p.amortization;
+
+    // 3. Ratios Calculation
+    stmt.ratios = {
+        // Profitability
+        grossMargin: p.revenue ? (p.grossProfit / p.revenue) * 100 : 0,
+        operatingMargin: p.revenue ? (p.operatingProfit / p.revenue) * 100 : 0,
+        netMargin: p.revenue ? (p.netIncome / p.revenue) * 100 : 0,
+        ebitdaMargin: p.revenue ? ((p.ebitda || p.operatingProfit) / p.revenue) * 100 : 0,
+
+        // Liquidity
+        currentRatio: b.currentLiabilities ? (b.currentAssets / b.currentLiabilities) : 0,
+        quickRatio: b.currentLiabilities ? ((b.currentAssets - b.inventory) / b.currentLiabilities) : 0, // Acid Test
+        cashRatio: b.currentLiabilities ? (b.cash / b.currentLiabilities) : 0,
+
+        // Efficiency / Solvency
+        roe: b.shareholdersEquity ? (p.netIncome / b.shareholdersEquity) * 100 : 0,
+        roa: b.totalAssets ? (p.netIncome / b.totalAssets) * 100 : 0,
+        debtToEquity: b.shareholdersEquity ? (b.totalLiabilities / b.shareholdersEquity) : 0
+    };
 }

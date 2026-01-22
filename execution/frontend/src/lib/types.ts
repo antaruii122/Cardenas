@@ -58,10 +58,18 @@ export interface FinancialStatement {
         retainedEarnings?: number;
     };
     ratios?: {
-        profitability?: any;
-        liquidity?: any;
-        leverage?: any;
-        efficiency?: any;
+        grossMargin: number;
+        operatingMargin: number; // EBIT Margin
+        netMargin: number;
+        ebitdaMargin?: number;
+
+        currentRatio: number; // Liquidity
+        quickRatio: number;   // Acid Test
+        cashRatio: number;
+
+        roe?: number;
+        roa?: number;
+        debtToEquity?: number;
     };
     unmapped?: Array<{ description: string; value: number }>; // For AI Analysis
 }
