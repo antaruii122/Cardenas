@@ -43,7 +43,6 @@ export default function AnalysisPage() {
     }
 
     const sortedStatements = [...report.statements].sort((a, b) => a.metadata.period.localeCompare(b.metadata.period));
-    const periods = sortedStatements.map(s => s.metadata.period);
     const current = sortedStatements[sortedStatements.length - 1];
     const previous = sortedStatements.length > 1 ? sortedStatements[sortedStatements.length - 2] : null;
 
@@ -52,19 +51,25 @@ export default function AnalysisPage() {
         return ((curr - prev) / Math.abs(prev)) * 100;
     };
 
+    // --- Dynamic AI Logic ---
+    const revenueVar = calcVar(current.pnl.revenue, previous?.pnl.revenue);
+    const costVar = calcVar(Math.abs(current.pnl.cogs), Math.abs(previous?.pnl.cogs || 0));
+    const netMargin = current.ratios?.netMargin || 0;
 
-    const margins = {
-        gross: (current.pnl.grossProfit / current.pnl.revenue) * 100,
-        op: (current.pnl.operatingProfit / current.pnl.revenue) * 100,
-        net: (current.pnl.netIncome / current.pnl.revenue) * 100
-    };
+    let summaryText = `La salud financiera muestra ${revenueVar >= 0 ? 'un crecimiento' : 'una contracción'} de Ingresos del ${Math.abs(revenueVar).toFixed(1)}%. `;
+    if (costVar > revenueVar) {
+        summaryText += `Sin embargo, los costos aumentaron a un ritmo mayor (${costVar.toFixed(1)}%), presionando los márgenes. `;
+    } else {
+        summaryText += `La gestión de costos se mantuvo eficiente (+${costVar.toFixed(1)}%), permitiendo una expansión de márgenes. `;
+    }
+    summaryText += `El margen neto actual es del ${netMargin.toFixed(1)}%.`;
 
-    const radarData = [
-        { subject: 'Rentabilidad', A: Math.min(margins.op * 5, 100), fullMark: 100 },
-        { subject: 'Liquidez', A: (current.balanceSheet.currentAssets / (current.balanceSheet.currentLiabilities || 1)) * 40 || 0, fullMark: 100 },
-        { subject: 'Solvencia', A: 80, fullMark: 100 },
-        { subject: 'Eficiencia', A: 65, fullMark: 100 },
-        { subject: 'Crecimiento', A: 90, fullMark: 100 },
+    // --- Ratios Data ---
+    const ratios = [
+        { label: "Márgen EBITDA", value: current.ratios?.ebitdaMargin, format: "%", ideal: "> 15%", color: "text-blue-400" },
+        { label: "Prueba Ácida", value: current.ratios?.quickRatio, format: "x", ideal: "> 1.0x", color: "text-emerald-400" },
+        { label: "Liquidez Corriente", value: current.ratios?.currentRatio, format: "x", ideal: "1.5x - 2.0x", color: "text-teal-400" },
+        { label: "Retorno s/ Activos (ROA)", value: current.ratios?.roa, format: "%", ideal: "> 5%", color: "text-purple-400" },
     ];
 
     const pnlRows = [
@@ -77,13 +82,11 @@ export default function AnalysisPage() {
         { id: "net", label: "Utilidad Neta", values: sortedStatements.map(s => s.pnl.netIncome), isTotal: true }
     ];
 
-    const aiSummary = "La salud financiera muestra un fuerte crecimiento de Ingresos (+20%), pero la rentabilidad está bajo presión por el aumento de Costos (+25%). Se recomienda un enfoque agresivo en optimización de proveedores.";
-
     return (
         <div className="min-h-screen bg-[#0B0F17] text-gray-200 p-6 font-sans">
             <div className="max-w-[1600px] mx-auto space-y-6">
 
-                {/* 0. Header (Minimalist) */}
+                {/* Header */}
                 <div className="flex justify-between items-center border-b border-white/5 pb-4">
                     <div className="flex items-center gap-2">
                         <div className="p-2 bg-blue-500/10 rounded-lg">
@@ -97,7 +100,7 @@ export default function AnalysisPage() {
                     </div>
                 </div>
 
-                {/* 1. AI Executive Summary (Brain) */}
+                {/* AI Executive Summary */}
                 <div className="relative overflow-hidden rounded-2xl bg-[#151B26] border border-white/5 p-6 shadow-2xl">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
                     <div className="flex gap-6 items-start relative z-10">
@@ -105,18 +108,18 @@ export default function AnalysisPage() {
                             <TrendingUp className="text-indigo-400" size={32} />
                         </div>
                         <div>
-                            <h3 className="text-sm font-semibold text-indigo-400 uppercase tracking-wider mb-2">Resumen Ejecutivo AI</h3>
+                            <h3 className="text-sm font-semibold text-indigo-400 uppercase tracking-wider mb-2">Resumen Ejecutivo AI (Dinámico)</h3>
                             <p className="text-lg md:text-xl text-gray-100 font-light leading-relaxed max-w-4xl">
-                                {aiSummary}
+                                {summaryText}
                             </p>
                         </div>
                     </div>
                 </div>
 
-                {/* 2. The Bento Grid (3 Columns) */}
+                {/* Bento Grid layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-                    {/* Left: Key Financials (Table) */}
+                    {/* Left: Key Financials */}
                     <div className="lg:col-span-4 bg-[#151B26] border border-white/5 rounded-2xl p-6 flex flex-col h-full">
                         <h3 className="text-white font-medium mb-6">Datos Financieros Clave</h3>
                         <div className="flex-1 overflow-auto">
@@ -134,9 +137,8 @@ export default function AnalysisPage() {
                                         const prevVal = row.values[row.values.length - 2] || 0;
                                         const variance = calcVar(currVal, prevVal);
                                         const isPos = variance > 0;
-
                                         return (
-                                            <tr key={row.id} className="group hover:bg-white/5 transition-colors">
+                                            <tr key={row.id} className="group hover:bg-white/5 transition-colors cursor-help" title={`Valor calculado desde filas fuente`}>
                                                 <td className={`py-3 ${row.isTotal ? 'text-white font-medium' : 'text-gray-400'}`}>
                                                     {row.label}
                                                 </td>
@@ -154,107 +156,75 @@ export default function AnalysisPage() {
                         </div>
                     </div>
 
-                    {/* Center: Performance Visuals (Charts) */}
+                    {/* Center: Strategic Ratios (The NEW Focus) */}
                     <div className="lg:col-span-4 bg-[#151B26] border border-white/5 rounded-2xl p-6 flex flex-col h-full">
-                        <h3 className="text-white font-medium mb-6">Tendencia de Rendimiento</h3>
-                        <div className="flex-1 min-h-[300px] flex items-center justify-center border border-dashed border-white/10 rounded-xl relative overflow-hidden group">
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F17] to-transparent opacity-50"></div>
-                            <FinancialRadarChart data={radarData} />
-                            {/* Hint: We can add more charts here in tabs later */}
+                        <h3 className="text-white font-medium mb-6">Ratios Estratégicos</h3>
+                        <div className="grid grid-cols-1 gap-4">
+                            {ratios.map((r, i) => (
+                                <div key={i} className="p-4 bg-[#0B0F17] border border-white/5 rounded-xl hover:border-white/20 transition-all cursor-help relative group">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <span className="text-xs text-gray-500 uppercase tracking-wider block mb-1">{r.label}</span>
+                                            <div className={`text-2xl font-mono ${r.color}`}>
+                                                {r.value ? r.value.toFixed(1) : '-'}
+                                                <span className="text-sm text-gray-500 ml-1">{r.format === '%' ? '%' : 'x'}</span>
+                                            </div>
+                                        </div>
+                                        {r.value && (
+                                            <div className="p-2 rounded-lg bg-white/5 text-gray-400 text-[10px] font-mono">
+                                                Meta: {r.ideal}
+                                            </div>
+                                        )}
+                                    </div>
+                                    {/* Tooltip logic placeholder */}
+                                    <div className="absolute opacity-0 group-hover:opacity-100 bottom-full left-0 mb-2 bg-gray-800 text-xs text-white p-2 rounded shadow-lg pointer-events-none transition-opacity">
+                                        Fuente: Calculado en base a Balance y P&L
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                        <div className="mt-4 grid grid-cols-2 gap-4">
-                            <div className="bg-[#0B0F17] p-4 rounded-xl border border-white/5">
-                                <span className="text-xs text-gray-500 uppercase">Margen Bruto</span>
-                                <div className="text-xl font-mono text-white mt-1">{margins.gross.toFixed(1)}%</div>
-                            </div>
-                            <div className="bg-[#0B0F17] p-4 rounded-xl border border-white/5">
-                                <span className="text-xs text-gray-500 uppercase">Margen Neto</span>
-                                <div className="text-xl font-mono text-emerald-400 mt-1">{margins.net.toFixed(1)}%</div>
-                            </div>
+                        <div className="mt-6 p-4 bg-blue-500/5 rounded-xl border border-blue-500/10">
+                            <h4 className="text-xs font-semibold text-blue-400 uppercase mb-2">Diagnóstico Rápido</h4>
+                            <p className="text-sm text-gray-400 leading-relaxed">
+                                {current.ratios?.quickRatio && current.ratios.quickRatio < 1
+                                    ? "Alerta: La Prueba Ácida es menor a 1.0, indicando posibles problemas de liquidez inmediata sin vender inventario."
+                                    : "Liquidez saludable. La empresa puede cubrir sus obligaciones a corto plazo."}
+                            </p>
                         </div>
                     </div>
 
-                    {/* Right: AI Insights (Action Items) */}
+                    {/* Right: AI Insights (Unchanged but aligned) */}
                     <div className="lg:col-span-4 bg-[#151B26] border border-white/5 rounded-2xl p-6 flex flex-col h-full">
                         <h3 className="text-white font-medium mb-6">Acciones Estratégicas (AI)</h3>
-
+                        {/* ... Existing Action Items Logic ... */}
                         <div className="space-y-4">
-                            {/* Action Item 1 */}
                             <div className="group p-4 bg-[#0B0F17] hover:bg-white/5 border border-white/5 hover:border-blue-500/30 rounded-xl transition-all cursor-pointer">
                                 <div className="flex gap-3">
                                     <div className="mt-1 w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
                                     <div>
-                                        <h4 className="text-sm font-medium text-gray-200 group-hover:text-blue-200">Renegociar Contratos Costos</h4>
-                                        <p className="text-xs text-gray-500 mt-1">El COGS aumentó un 25%, superando el crecimiento de ingresos. Reducir costos directos es prioridad.</p>
+                                        <h4 className="text-sm font-medium text-gray-200 group-hover:text-blue-200">Optimización de Capital de Trabajo</h4>
+                                        <p className="text-xs text-gray-500 mt-1">Revisar rotación de inventarios para mejorar la Prueba Ácida.</p>
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Action Item 2 */}
+                            {/* Placeholder items for demo */}
                             <div className="group p-4 bg-[#0B0F17] hover:bg-white/5 border border-white/5 hover:border-emerald-500/30 rounded-xl transition-all cursor-pointer">
                                 <div className="flex gap-3">
                                     <div className="mt-1 w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                                     <div>
-                                        <h4 className="text-sm font-medium text-gray-200 group-hover:text-emerald-200">Optimizar Gastos Admin</h4>
-                                        <p className="text-xs text-gray-500 mt-1">Gastos estables (+10%). Mantener control estricto para mejorar margen operativo.</p>
+                                        <h4 className="text-sm font-medium text-gray-200 group-hover:text-emerald-200">Revisión de Estructura de Costos</h4>
+                                        <p className="text-xs text-gray-500 mt-1">El margen EBITDA sugiere oportunidad de eficiencia operativa.</p>
                                     </div>
                                 </div>
-                            </div>
-
-                            {/* Action Item 3 */}
-                            <div className="group p-4 bg-[#0B0F17] hover:bg-white/5 border border-white/5 hover:border-purple-500/30 rounded-xl transition-all cursor-pointer">
-                                <div className="flex gap-3">
-                                    <div className="mt-1 w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]" />
-                                    <div>
-                                        <h4 className="text-sm font-medium text-gray-200 group-hover:text-purple-200">Revision de Precios</h4>
-                                        <p className="text-xs text-gray-500 mt-1">Considerar ajuste de precios segun IPC para proteger el margen bruto.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="mt-auto pt-6">
-                            <div className="p-4 rounded-xl bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/20 flex items-center justify-between">
-                                <span className="text-xs font-medium text-blue-200">Ver Diagnóstico Completo</span>
-                                <ArrowUpRight size={16} className="text-blue-300" />
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* 3. Detailed Breakdown (Tabs) */}
+                {/* Detailed Table */}
                 <div className="mt-10">
-                    <div className="flex gap-6 border-b border-white/5 mb-6">
-                        <button
-                            onClick={() => setActiveTab("overview")}
-                            className={`pb-3 text-sm font-medium border-b-2 transition-all ${activeTab === 'overview' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
-                        >
-                            Estados Financieros
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("ratios")}
-                            className={`pb-3 text-sm font-medium border-b-2 transition-all ${activeTab === 'ratios' ? 'border-purple-500 text-purple-400' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
-                        >
-                            Ratios Avanzados
-                        </button>
-                    </div>
-
-                    <div className="bg-[#151B26] border border-white/5 rounded-2xl p-6 min-h-[400px]">
-                        {activeTab === 'overview' && (
-                            <StatementTreeTable
-                                statements={report.statements}
-                                title="Estado de Resultados Consolidado"
-                            />
-                        )}
-                        {activeTab === 'ratios' && (
-                            <div className="text-center text-gray-500 py-20">
-                                <PieChart className="mx-auto mb-4 opacity-20" size={48} />
-                                <p>Análisis de Ratios en desarrollo...</p>
-                            </div>
-                        )}
-                    </div>
+                    <StatementTreeTable statements={report.statements} title="Estado de Resultados Consolidado" />
                 </div>
-
             </div>
         </div>
     );
