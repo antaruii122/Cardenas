@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { FinancialReport } from "@/lib/types";
 import { formatCLP, formatPercentDecimal } from "@/lib/formatters";
 import { DataVerificationPanel } from "@/components/DataVerificationPanel";
-import { StatementTreeTable } from "@/components/StatementTreeTable";
+import { ClayTable } from "@/components/ClayTable";
+import { StrategicRatiosPanel } from "@/components/StrategicRatiosPanel";
 
 import {
     ArrowUpRight, ArrowDownRight, DollarSign, Activity, PieChart, BarChart3,
@@ -237,97 +238,18 @@ export default function AnalysisPage() {
                 </div>
 
                 {/* Bento Grid layout */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-20">
 
-                    {/* Left: Key Financials */}
-                    <div className="lg:col-span-4 bg-[#151B26] border border-white/5 rounded-2xl p-6 flex flex-col h-full">
-                        <h3 className="text-white font-medium mb-6">Datos Financieros Clave</h3>
-                        <div className="flex-1 overflow-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="text-gray-500 border-b border-white/5">
-                                        <th className="text-left pb-3 font-medium">Concepto</th>
-                                        {periods.map(p => (
-                                            <th key={p} className="text-right pb-3 font-medium">{p}</th>
-                                        ))}
-                                        <th className="text-right pb-3 font-medium">Var %</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-white/5">
-                                    {pnlRows.map((row) => {
-                                        const currVal = row.values[0] || 0; // Latest is index 0
-                                        const prevVal = row.values[1] || 0;
-                                        const variance = calcVar(currVal, prevVal);
-                                        const isPos = variance > 0;
-                                        return (
-                                            <tr key={row.id} className="group hover:bg-white/5 transition-colors cursor-help" title={`Valor calculado desde filas fuente`}>
-                                                <td className={`py-3 ${row.isTotal ? 'text-white font-medium' : 'text-gray-400'}`}>
-                                                    {row.label}
-                                                </td>
-                                                {row.values.map((v, i) => (
-                                                    <td key={i} className={`py-3 text-right font-mono tracking-tight ${row.isTotal ? 'text-white' : 'text-gray-300'}`}>
-                                                        {formatCLP(v)}
-                                                    </td>
-                                                ))}
-                                                <td className={`py-3 text-right font-medium ${isPos ? (row.isNegative ? 'text-rose-400' : 'text-emerald-400') : (row.isNegative ? 'text-emerald-400' : 'text-rose-400')}`}>
-                                                    {isFinite(variance) ? `${variance > 0 ? '+' : ''}${variance.toFixed(1)}%` : '-'}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    {/* Center: Strategic Ratios (The NEW Focus) */}
-                    <div className="lg:col-span-4 bg-[#151B26] border border-white/5 rounded-2xl p-6 flex flex-col h-full">
-                        <h3 className="text-white font-medium mb-6">Ratios Estratégicos</h3>
-                        <div className="grid grid-cols-1 gap-4">
-                            {ratioData.map((r, i) => (
-                                <div key={i} className="p-4 bg-[#0B0F17] border border-white/5 rounded-xl hover:border-white/20 transition-all cursor-help relative group">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <span className="text-xs text-gray-500 uppercase tracking-wider block mb-1">{r.label}</span>
-                                            <div className={`text-2xl font-mono ${r.color}`}>
-                                                {r.value ? r.value.toFixed(1) : '-'}
-                                                <span className="text-sm text-gray-500 ml-1">{r.format === '%' ? '%' : 'x'}</span>
-                                            </div>
-                                        </div>
-                                        {r.value !== undefined && (
-                                            <div className="p-2 rounded-lg bg-white/5 text-gray-400 text-[10px] font-mono">
-                                                Meta: {r.ideal}
-                                            </div>
-                                        )}
-                                    </div>
-                                    {/* Calculated Math Tooltip */}
-                                    <div className="absolute opacity-0 group-hover:opacity-100 bottom-full left-0 mb-2 bg-gray-900 border border-white/10 text-xs text-gray-300 p-3 rounded-lg shadow-xl pointer-events-none transition-opacity w-64 z-50">
-                                        <div className="font-semibold text-white mb-1">Cálculo:</div>
-                                        <div className="font-mono text-[10px] leading-tight break-words">
-                                            {r.math}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="mt-6 p-4 bg-blue-500/5 rounded-xl border border-blue-500/10">
-                            <h4 className="text-xs font-semibold text-blue-400 uppercase mb-2">Diagnóstico Rápido</h4>
-                            <p className="text-sm text-gray-400 leading-relaxed">
-                                {hasBalanceSheet
-                                    ? (current.ratios?.quickRatio && current.ratios.quickRatio < 1
-                                        ? "Alerta: La Prueba Ácida es menor a 1.0, indicando posibles problemas de liquidez."
-                                        : "Liquidez saludable. La compañía cubre sus deudas corto plazo.")
-                                    : "Precaución: No se detectaron datos de Balance General. Análisis restringido a rentabilidad operativa."
-                                }
-                            </p>
-                        </div>
+                    {/* Top Row: Strategic Ratios (Full Width or 8 cols) */}
+                    <div className="lg:col-span-8 h-[450px]">
+                        <StrategicRatiosPanel statement={current} />
                     </div>
 
                     {/* Right: AI Insights (Action Items) */}
-                    <div className="lg:col-span-4 bg-[#151B26] border border-white/5 rounded-2xl p-6 flex flex-col h-full">
+                    <div className="lg:col-span-4 bg-[#151B26] border border-white/5 rounded-2xl p-6 flex flex-col h-[450px]">
                         <h3 className="text-white font-medium mb-6">Acciones Estratégicas (AI)</h3>
 
-                        <div className="space-y-4">
+                        <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar">
                             {displayActions.map((action, idx) => (
                                 <div key={idx} className="group p-4 bg-[#0B0F17] hover:bg-white/5 border border-white/5 hover:border-blue-500/30 rounded-xl transition-all cursor-pointer">
                                     <div className="flex gap-3">
@@ -348,11 +270,11 @@ export default function AnalysisPage() {
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Detailed Table */}
-                <div className="mt-10">
-                    <StatementTreeTable statements={report.statements} title="Estado de Resultados Consolidado" />
+                    {/* Bottom: The "Clay" Table (Full Width) */}
+                    <div className="lg:col-span-12">
+                        <ClayTable statements={report.statements} title="Estado de Resultados Consolidado" />
+                    </div>
                 </div>
             </div>
         </div>

@@ -278,7 +278,16 @@ function createEmptyStatement(period: string): FinancialStatement {
             cash: 0, accountsReceivable: 0, inventory: 0, currentAssets: 0,
             fixedAssets: 0, totalAssets: 0, accountsPayable: 0, shortTermDebt: 0,
             currentLiabilities: 0, totalLiabilities: 0, longTermDebt: 0,
-            shareholdersEquity: 0
+            shareholdersEquity: 0, retainedEarnings: 0
+        },
+        ratios: {
+            currentRatio: null, quickRatio: null, cashRatio: null, workingCapital: null,
+            assetTurnover: null, inventoryTurnover: null, daysInventoryOutstanding: null,
+            receivablesTurnover: null, daysSalesOutstanding: null, payablesTurnover: null,
+            daysPayablesOutstanding: null, cashConversionCycle: null,
+            grossMargin: null, operatingMargin: null, ebitdaMargin: null, netMargin: null,
+            roa: null, roe: null,
+            debtToEquity: null, debtRatio: null, interestCoverage: null
         }
     };
 }
@@ -326,11 +335,22 @@ function addToStatement(stmt: FinancialStatement, desc: string, val: number) {
 
     // Balance Sheet (Assets +, Liabs +, Equity +) -> Usually positive in BS
     // Using simple mapping based on keywords (Need new mappings in next step or use existing if robust)
+    // Balance Sheet (Assets +, Liabs +, Equity +)
     else if (matches(desc, ["activos corrientes", "activos circulantes"])) stmt.balanceSheet.currentAssets = val;
+    else if (matches(desc, ["activos no corrientes", "activo fijo", "propiedad, planta", "inmovilizado"])) stmt.balanceSheet.fixedAssets = val;
+    else if (matches(desc, ["efectivo", "caja", "bancos", "disponible", "tesoreria"])) stmt.balanceSheet.cash = val;
+    else if (matches(desc, ["cuentas por cobrar", "deudores", "clientes"])) stmt.balanceSheet.accountsReceivable = val;
+    else if (matches(desc, ["inventario", "existencias", "mercaderias"])) stmt.balanceSheet.inventory = val;
+
     else if (matches(desc, ["pasivos corrientes", "pasivos circulantes"])) stmt.balanceSheet.currentLiabilities = val;
-    else if (matches(desc, ["patrimonio", "capital"])) stmt.balanceSheet.shareholdersEquity = val;
-    else if (matches(desc, ["inventario", "existencias"])) stmt.balanceSheet.inventory = val;
-    else if (matches(desc, ["cuentas por cobrar", "deudores"])) stmt.balanceSheet.accountsReceivable = val;
+    else if (matches(desc, ["cuentas por pagar", "proveedores"])) stmt.balanceSheet.accountsPayable = val;
+    else if (matches(desc, ["deuda corto plazo", "prestamos corto plazo", "financieras cp"])) stmt.balanceSheet.shortTermDebt = val;
+
+    else if (matches(desc, ["pasivos no corrientes", "pasivos largo plazo"])) stmt.balanceSheet.longTermDebt = val; // Often Total Non-Current
+    else if (matches(desc, ["total pasivos", "pasivo total"])) stmt.balanceSheet.totalLiabilities = val;
+
+    else if (matches(desc, ["patrimonio", "capital", "social"])) stmt.balanceSheet.shareholdersEquity = val;
+    else if (matches(desc, ["resultados acumulados", "utilidades retenidas"])) stmt.balanceSheet.retainedEarnings = val;
 
     // Capture UNMAPPED rows for AI Analysis
     else {
@@ -364,22 +384,62 @@ function calculateDerivedMetrics(stmt: FinancialStatement) {
     }
     p.ebitda = p.operatingProfit + p.depreciation + p.amortization;
 
-    // 3. Ratios Calculation
+    // 3. Level 10 Ratios Calculation
+    // Helper for safe division (div by 0 returns null)
+    const safeDiv = (num: number | undefined, den: number | undefined): number | null => {
+        if (num === undefined || den === undefined || den === 0) return null;
+        return num / den;
+    };
+
+    // Calculate implicit totals if missing but components exist
+    if (b.totalLiabilities === 0 && b.currentLiabilities !== 0) {
+        b.totalLiabilities = b.currentLiabilities + b.longTermDebt;
+    }
+    if (b.totalAssets === 0 && b.currentAssets !== 0) {
+        b.totalAssets = b.currentAssets + b.fixedAssets;
+    }
+
+    // Profitability
+    const revenue = p.revenue;
     stmt.ratios = {
         // Profitability
-        grossMargin: p.revenue ? (p.grossProfit / p.revenue) * 100 : 0,
-        operatingMargin: p.revenue ? (p.operatingProfit / p.revenue) * 100 : 0,
-        netMargin: p.revenue ? (p.netIncome / p.revenue) * 100 : 0,
-        ebitdaMargin: p.revenue ? ((p.ebitda || p.operatingProfit) / p.revenue) * 100 : 0,
+        grossMargin: safeDiv(p.grossProfit, revenue) ? safeDiv(p.grossProfit, revenue)! * 100 : null,
+        operatingMargin: safeDiv(p.operatingProfit, revenue) ? safeDiv(p.operatingProfit, revenue)! * 100 : null,
+        ebitdaMargin: safeDiv(p.ebitda || p.operatingProfit, revenue) ? safeDiv(p.ebitda || p.operatingProfit, revenue)! * 100 : null,
+        netMargin: safeDiv(p.netIncome, revenue) ? safeDiv(p.netIncome, revenue)! * 100 : null,
+        roa: safeDiv(p.netIncome, b.totalAssets) ? safeDiv(p.netIncome, b.totalAssets)! * 100 : null,
+        roe: safeDiv(p.netIncome, b.shareholdersEquity) ? safeDiv(p.netIncome, b.shareholdersEquity)! * 100 : null,
 
         // Liquidity
-        currentRatio: b.currentLiabilities ? (b.currentAssets / b.currentLiabilities) : 0,
-        quickRatio: b.currentLiabilities ? ((b.currentAssets - b.inventory) / b.currentLiabilities) : 0, // Acid Test
-        cashRatio: b.currentLiabilities ? (b.cash / b.currentLiabilities) : 0,
+        currentRatio: safeDiv(b.currentAssets, b.currentLiabilities),
+        quickRatio: safeDiv(b.currentAssets - b.inventory, b.currentLiabilities),
+        cashRatio: safeDiv(b.cash, b.currentLiabilities),
+        workingCapital: (b.currentAssets && b.currentLiabilities) ? b.currentAssets - b.currentLiabilities : null,
 
-        // Efficiency / Solvency
-        roe: b.shareholdersEquity ? (p.netIncome / b.shareholdersEquity) * 100 : 0,
-        roa: b.totalAssets ? (p.netIncome / b.totalAssets) * 100 : 0,
-        debtToEquity: b.shareholdersEquity ? (b.totalLiabilities / b.shareholdersEquity) : 0
+        // Efficiency
+        // Note: Turnover ratios usually use Average Inventory/Receivables. Here we use Ending Balance as proxy for single period.
+        assetTurnover: safeDiv(revenue, b.totalAssets),
+        inventoryTurnover: safeDiv(p.cogs ? Math.abs(p.cogs) : 0, b.inventory),
+        daysInventoryOutstanding: safeDiv(b.inventory * 365, p.cogs ? Math.abs(p.cogs) : 0),
+        receivablesTurnover: safeDiv(revenue, b.accountsReceivable),
+        daysSalesOutstanding: safeDiv(b.accountsReceivable * 365, revenue),
+        payablesTurnover: safeDiv(p.cogs ? Math.abs(p.cogs) : 0, b.accountsPayable),
+        daysPayablesOutstanding: safeDiv(b.accountsPayable * 365, p.cogs ? Math.abs(p.cogs) : 0),
+
+        // CCC will be calculated if days are available
+        cashConversionCycle: null, // Calc below
+
+        // Solvency
+        debtToEquity: safeDiv(b.totalLiabilities, b.shareholdersEquity),
+        debtRatio: safeDiv(b.totalLiabilities, b.totalAssets),
+        interestCoverage: safeDiv(p.operatingProfit, p.interestExpense ? Math.abs(p.interestExpense) : 0)
     };
+
+    // Calculate CCC if valid
+    const dio = stmt.ratios.daysInventoryOutstanding;
+    const dso = stmt.ratios.daysSalesOutstanding;
+    const dpo = stmt.ratios.daysPayablesOutstanding;
+    if (dio !== null && dso !== null && dpo !== null) {
+        stmt.ratios.cashConversionCycle = dio + dso - dpo;
+    }
 }
