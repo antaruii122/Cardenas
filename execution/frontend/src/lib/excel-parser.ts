@@ -58,7 +58,18 @@ export async function parseFinancialExcel(file: File): Promise<ParsingResult> {
             // If first cell is empty but second has text, use second
             if (!firstCell && secondCell) description = secondCell;
 
-            if (!description || description.length < 2) continue; // Skip empty/garbage rows
+            // CRITICAL FIX: Skip if description looks like a number (e.g. "0.214" from a percentage row)
+            // This happens when the description column is empty and we pick up the value column by mistake.
+            if (!description || description.length < 2 || !isNaN(parseFloat(description))) continue;
+
+            // Skip lines that are explicitly percentage calculations/ratios (not raw data)
+            if (description.includes("%") || description.toLowerCase().includes("porcentaje") || description.toLowerCase().includes("margin") || description.toLowerCase().includes("margen")) {
+                // But be careful: "Margen de Explotación" might be a valid label for a row that HAS the monetary value too?
+                // In the user's excel, "Margen de Explotación" (Row 6) has MONEY. "21.4%" (Row 7) has PERCENTAGE.
+                // The "21.4%" row has NO description in Col A. So it was caught by the isNaN check above.
+                // So we don't need to aggressively filter "Margen" keywords, just numeric descriptions.
+            }
+
 
             const rowValues: Record<string, number> = {};
             let hasData = false;
