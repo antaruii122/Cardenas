@@ -29,7 +29,7 @@ export default function FinancialHealthPage() {
         }
     }, [router]);
 
-    if (!data || !report) return <div className="flex items-center justify-center h-[50vh] text-muted-foreground animate-pulse">Running Diagnostics...</div>;
+    if (!data || !report) return <div className="flex items-center justify-center h-[50vh] text-muted-foreground animate-pulse">Ejecutando Diagnóstico...</div>;
 
     return (
         <div className="space-y-12 animate-in fade-in duration-700 pb-20">
@@ -41,15 +41,15 @@ export default function FinancialHealthPage() {
 
                 <div className="flex flex-col md:flex-row justify-between items-center gap-8 relative z-10">
                     <div>
-                        <h1 className="text-display text-4xl md:text-5xl font-medium text-white mb-2">Financial Vital Signs</h1>
-                        <p className="text-muted-foreground font-light text-lg">Detailed rigourous analysis of strict accounting ratios.</p>
+                        <h1 className="text-display text-4xl md:text-5xl font-medium text-white mb-2">Signos Vitales Financieros</h1>
+                        <p className="text-muted-foreground font-light text-lg">Análisis riguroso de ratios contables estrictos.</p>
                     </div>
 
                     <div className="flex items-center gap-6">
                         <div className="text-right hidden md:block">
-                            <div className="text-sm font-mono text-muted-foreground uppercase tracking-widest">Overall Health Score</div>
+                            <div className="text-sm font-mono text-muted-foreground uppercase tracking-widest">Puntaje Global</div>
                             <div className={`text-sm ${report.overallScore >= 70 ? "text-emerald-400" : report.overallScore >= 50 ? "text-amber-400" : "text-red-400"}`}>
-                                {report.overallScore >= 70 ? "OPTIMAL" : report.overallScore >= 50 ? "WARNING" : "CRITICAL"}
+                                {report.overallScore >= 70 ? "ÓPTIMO" : report.overallScore >= 50 ? "ALERTA" : "CRÍTICO"}
                             </div>
                         </div>
                         <div className="relative flex items-center justify-center w-32 h-32">
@@ -76,39 +76,39 @@ export default function FinancialHealthPage() {
             {/* Main Grid: Liquidity, Solvency, Efficiency, Profitability */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <MetricCard
-                    title="Liquidity"
+                    title="Liquidez"
                     score={report.liquidity.score}
                     icon={<Activity className="w-5 h-5 text-blue-400" />}
                     metrics={[
-                        { label: "Current Ratio", value: report.liquidity.currentRatio.value.toFixed(2) + "x", status: report.liquidity.currentRatio.status },
-                        { label: "Acid Test (Quick)", value: report.liquidity.quickRatio.value.toFixed(2) + "x", status: report.liquidity.quickRatio.status },
+                        { label: "Razón Corriente", value: report.liquidity.currentRatio.value.toFixed(2) + "x", status: report.liquidity.currentRatio.status },
+                        { label: "Prueba Ácida (Quick)", value: report.liquidity.quickRatio.value.toFixed(2) + "x", status: report.liquidity.quickRatio.status },
                     ]}
                 />
                 <MetricCard
-                    title="Solvency"
+                    title="Solvencia"
                     score={report.solvency.score}
                     icon={<ShieldCheck className="w-5 h-5 text-purple-400" />}
                     metrics={[
-                        { label: "Debt / Equity", value: report.solvency.debtToEquity.value.toFixed(2), status: report.solvency.debtToEquity.status },
-                        { label: "Interest Cov.", value: report.solvency.interestCoverage.value.toFixed(1) + "x", status: report.solvency.interestCoverage.status },
+                        { label: "Deuda / Patrimonio", value: report.solvency.debtToEquity.value.toFixed(2), status: report.solvency.debtToEquity.status },
+                        { label: "Cob. Intereses", value: report.solvency.interestCoverage.value.toFixed(1) + "x", status: report.solvency.interestCoverage.status },
                     ]}
                 />
                 <MetricCard
-                    title="Efficiency"
+                    title="Eficiencia"
                     score={report.efficiency.score}
                     icon={<Zap className="w-5 h-5 text-amber-400" />}
                     metrics={[
-                        { label: "Asset Turnover", value: report.efficiency.assetTurnover.value.toFixed(2), status: report.efficiency.assetTurnover.status },
+                        { label: "Rot. Activos", value: report.efficiency.assetTurnover.value.toFixed(2), status: report.efficiency.assetTurnover.status },
                         // Only show Inventory Turnover if relevant (not null)
-                        ...(report.efficiency.inventoryTurnover ? [{ label: "Inv. Turnover", value: report.efficiency.inventoryTurnover.value.toFixed(1), status: report.efficiency.inventoryTurnover.status }] : []),
+                        ...(report.efficiency.inventoryTurnover ? [{ label: "Rot. Inventario", value: report.efficiency.inventoryTurnover.value.toFixed(1), status: report.efficiency.inventoryTurnover.status }] : []),
                     ]}
                 />
                 <MetricCard
-                    title="Profitability"
+                    title="Rentabilidad"
                     score={report.profitability.score}
                     icon={<TrendingUp className="w-5 h-5 text-emerald-400" />}
                     metrics={[
-                        { label: "Net Margin", value: (report.profitability.netMargin.value * 100).toFixed(1) + "%", status: report.profitability.netMargin.status },
+                        { label: "Margen Neto", value: (report.profitability.netMargin.value * 100).toFixed(1) + "%", status: report.profitability.netMargin.status },
                         { label: "ROE", value: (report.profitability.roe.value * 100).toFixed(1) + "%", status: report.profitability.roe.status },
                     ]}
                 />
@@ -123,17 +123,17 @@ export default function FinancialHealthPage() {
                         <Zap size={20} />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-display font-medium text-white">Strategic Advisory</h2>
-                        <p className="text-sm text-primary/70 font-mono uppercase tracking-wider">AI Analysis v1.0</p>
+                        <h2 className="text-2xl font-display font-medium text-white">Consejería Estratégica</h2>
+                        <p className="text-sm text-primary/70 font-mono uppercase tracking-wider">Análisis IA v1.0</p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
                     <div className="lg:col-span-2 space-y-6">
                         <p className="text-lg text-white/80 leading-relaxed font-light">
-                            Based on your strict financial ratios, the AI has detected specific opportunities for improvement.
+                            Basado en tus ratios financieros estrictos, la IA ha detectado oportunidades específicas de mejora.
                             <br /><br />
-                            <span className="text-white/40 italic text-sm">[System Note: The live AI connection is being established. Below is a simulation based on your scores.]</span>
+                            <span className="text-white/40 italic text-sm">[Nota del sistema: La conexión con la IA en vivo se está estableciendo. Abajo una simulación basada en tus puntajes.]</span>
                         </p>
 
                         {/* Dynamic Mock Advice based on Score */}
@@ -141,22 +141,22 @@ export default function FinancialHealthPage() {
                             {report.liquidity.score < 60 && (
                                 <AdviceItem
                                     type="Critical"
-                                    title="Liquidity Constraint Detected"
-                                    desc="Your Acid Test is below 1.0. You are at risk of not meeting short-term obligations without selling inventory. Consider factoring receivables immediately."
+                                    title="Restricción de Liquidez Detectada"
+                                    desc="Tu Prueba Ácida está bajo 1.0. Estás en riesgo de no cubrir obligaciones de corto plazo sin vender inventario. Considera factoring inmediato."
                                 />
                             )}
                             {report.profitability.score > 80 && (
                                 <AdviceItem
                                     type="Opportunity"
-                                    title="High Efficiency / Low Leverage"
-                                    desc="Your ROE is excellent and debt is low. You have room to leverage cheap debt to finance aggressive expansion."
+                                    title="Alta Eficiencia / Bajo Apalancamiento"
+                                    desc="Tu ROE es excelente y la deuda es baja. Tienes espacio para apalancar deuda barata para financiar expansión agresiva."
                                 />
                             )}
                             {report.liquidity.score >= 60 && report.profitability.score <= 60 && (
                                 <AdviceItem
                                     type="Warning"
-                                    title="Operational Bloat"
-                                    desc="You have cash, but margins are thin. Audit your fixed costs (OpEx) immediately."
+                                    title="Exceso de Grasa Operativa"
+                                    desc="Tienes caja, pero los márgenes son delgados. Audita tus costos fijos (OpEx) inmediatamente."
                                 />
                             )}
                         </div>
@@ -164,14 +164,14 @@ export default function FinancialHealthPage() {
                     </div>
 
                     <div className="lg:col-span-1 border-l border-white/10 pl-8 hidden lg:block">
-                        <h4 className="text-sm font-mono text-white/40 mb-4 uppercase">Reference Data</h4>
+                        <h4 className="text-sm font-mono text-white/40 mb-4 uppercase">Datos de Referencia</h4>
                         <div className="space-y-4 text-sm text-white/60">
                             <div className="flex justify-between">
-                                <span>Industry Avg (Net Margin)</span>
+                                <span>Prom. Industria (Mg. Neto)</span>
                                 <span className="text-white">12.5%</span>
                             </div>
                             <div className="flex justify-between">
-                                <span>Industry Avg (Quick Ratio)</span>
+                                <span>Prom. Industria (Quick)</span>
                                 <span className="text-white">1.1x</span>
                             </div>
                         </div>

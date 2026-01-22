@@ -6,26 +6,26 @@ import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
 export default function Home() {
   const items = [
     {
-      title: "Smart Ingestion",
-      description: "Auto-detects columns, categories, and complex numeric formats (CLP, USD, UF).",
+      title: "Ingesta Inteligente",
+      description: "Detecta automáticamente columnas, categorías y formatos numéricos complejos (CLP, USD, UF).",
       header: <SkeletonOne />,
       icon: <UploadCloud className="h-4 w-4" />,
     },
     {
-      title: "S.E.E. Reporting protocol",
-      description: "Automatic calculation of Solvency, Stability, and Efficiency based on IFRS proxies.",
+      title: "Protocolo de Reportes S.E.E.",
+      description: "Cálculo automático de Solvencia, Estabilidad y Eficiencia basado en proxies IFRS.",
       header: <SkeletonTwo />,
       icon: <Activity className="h-4 w-4" />,
     },
     {
-      title: "Risk Detection",
-      description: "Identifies margin slippage and cash burn before they threaten solvency.",
+      title: "Detección de Riesgos",
+      description: "Identifica fugas de margen y quema de caja antes de que amenacen la solvencia.",
       header: <SkeletonThree />,
       icon: <ShieldCheck className="h-4 w-4" />,
     },
     {
-      title: "AI Advisory Layer",
-      description: "The engine suggests concrete actions: 'Reduce OpEx', 'Optimise Suppliers'.",
+      title: "Consejería de IA",
+      description: "El motor sugiere acciones concretas: 'Reducir Gastos Admin', 'Optimizar Proveedores'.",
       header: <SkeletonFour />,
       icon: <Zap className="h-4 w-4" />,
     },
@@ -42,7 +42,7 @@ export default function Home() {
         {/* TRUST SIGNALS - Minimalist */}
         <div className="w-full text-center border-y border-white/5 bg-white/[0.02] py-12">
           <div className="max-w-6xl mx-auto px-6">
-            <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-8">Trusted by Financial Teams</p>
+            <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-8">Equipos financieros que confían en nosotros</p>
             <div className="flex flex-wrap justify-center gap-16 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
               {/* Minimal Text Logos */}
               <span className="text-lg font-display font-bold text-white/80">ACME CORP</span>
@@ -55,9 +55,9 @@ export default function Home() {
 
         {/* BENTO GRID FEATURES */}
         <div className="w-full max-w-7xl px-6">
-          <h2 className="text-3xl md:text-5xl font-display font-medium text-center text-white mb-6">Complete Financial Clarity</h2>
+          <h2 className="text-3xl md:text-5xl font-display font-medium text-center text-white mb-6">Claridad Financiera Total</h2>
           <p className="text-center text-muted-foreground mb-16 max-w-2xl mx-auto font-light leading-relaxed">
-            Our engine converts raw Excel data into pure strategy. No complex ERP integrations required.
+            Nuestro motor convierte datos brutos de Excel en estrategia pura. Sin integraciones de ERP complejas.
           </p>
 
           <BentoGrid className="max-w-6xl mx-auto">
@@ -78,27 +78,27 @@ export default function Home() {
         <div className="w-full max-w-5xl px-6 pb-32 mt-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12">
             <div className="col-span-1 md:col-span-2 text-center mb-8">
-              <h2 className="text-3xl font-display text-white">Why Analyze?</h2>
+              <h2 className="text-3xl font-display text-white">¿Por qué analizar?</h2>
             </div>
             <BenefitItem
               number="01"
-              title="Profitability Assessment"
-              desc="It's not about sales; it's about what you keep. Identify real margins and model viability."
+              title="Evaluación de Rentabilidad"
+              desc="No se trata de ventas, sino de lo que te queda. Identifica márgenes reales y la viabilidad del modelo."
             />
             <BenefitItem
               number="02"
-              title="Strategic Decision Making"
-              desc="Stop guessing. Use hard data to decide whether to hire, invest, or cut costs."
+              title="Toma de Decisiones Estratégicas"
+              desc="Deja de adivinar. Usa datos duros para decidir si contratar, invertir o recortar gastos."
             />
             <BenefitItem
               number="03"
-              title="Risk Detection"
-              desc="Early warning of rising costs or operational inefficiencies before they become critical."
+              title="Detección de Riesgos"
+              desc="Alerta temprana de costos crecientes o ineficiencias operativas antes de que sean críticas."
             />
             <BenefitItem
               number="04"
-              title="Capital Access"
-              desc="Banks invest in numbers, not enthusiasm. A solid report is your passport to capital."
+              title="Acceso a Capital"
+              desc="Los bancos invierten en números, no en entusiasmo. Un reporte sólido es tu pasaporte al capital."
             />
           </div>
         </div>
@@ -107,7 +107,7 @@ export default function Home() {
 
       <footer className="w-full py-12 border-t border-white/5 bg-black/20 text-center">
         <p className="text-sm text-muted-foreground font-mono">
-          &copy; 2026 Antigravity Financial Tools. <span className="text-primary/50">System v2.0</span>
+          &copy; 2026 Antigravity Financial Tools. <span className="text-primary/50">Sistema v2.0</span>
         </p>
       </footer>
     </div>
