@@ -2,35 +2,46 @@
 
 :root {
   /* Refined Futurist Palette */
-  --background: #020617; /* Slate 950 */
-  --foreground: #f8fafc; /* Slate 50 */
+  --background: #020617;
+  /* Slate 950 */
+  --foreground: #f8fafc;
+  /* Slate 50 */
 
-  --card: rgba(2, 6, 23, 0.7); /* Darker, more opaque */
+  --card: rgba(2, 6, 23, 0.7);
+  /* Darker, more opaque */
   --card-foreground: #f8fafc;
 
   --popover: #020617;
   --popover-foreground: #f8fafc;
 
-  --primary: #10b981; /* Emerald 500 - Digital Wealth */
+  --primary: #10b981;
+  /* Emerald 500 - Digital Wealth */
   --primary-foreground: #ffffff;
 
-  --secondary: #1e293b; /* Slate 800 */
+  --secondary: #1e293b;
+  /* Slate 800 */
   --secondary-foreground: #f8fafc;
 
-  --muted: #334155; /* Slate 700 */
-  --muted-foreground: #94a3b8; /* Slate 400 */
+  --muted: #334155;
+  /* Slate 700 */
+  --muted-foreground: #94a3b8;
+  /* Slate 400 */
 
-  --accent: #7c3aed; /* Violet 600 - Strategic Insight */
+  --accent: #7c3aed;
+  /* Violet 600 - Strategic Insight */
   --accent-foreground: #ffffff;
 
-  --destructive: #ef4444; /* Red 500 */
+  --destructive: #ef4444;
+  /* Red 500 */
   --destructive-foreground: #ffffff;
 
-  --border: #1e293b; /* Slate 800 - Sharp borders */
+  --border: #1e293b;
+  /* Slate 800 - Sharp borders */
   --input: #1e293b;
   --ring: #10b981;
 
-  --radius: 0rem; /* Sharp, precise corners */
+  --radius: 0rem;
+  /* Sharp, precise corners */
 }
 
 @theme inline {
@@ -55,13 +66,15 @@
   --color-ring: var(--ring);
 
   --font-display: var(--font-playfair);
-  --font-sans: var(--font-space); /* Technical look for body */
+  --font-sans: var(--font-space);
+  /* Technical look for body */
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-space), "Courier New", monospace; /* Default to Tech look */
+  font-family: var(--font-space), "Courier New", monospace;
+  /* Default to Tech look */
   overflow-x: hidden;
   min-height: 100vh;
   position: relative;
@@ -71,6 +84,7 @@ body {
 .bg-grain {
   position: relative;
 }
+
 .bg-grain::before {
   content: "";
   position: absolute;
@@ -95,4 +109,22 @@ body {
 
 .text-display {
   font-family: var(--font-playfair);
+}
+
+/* 3D Flip Card Utilities */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
 }
