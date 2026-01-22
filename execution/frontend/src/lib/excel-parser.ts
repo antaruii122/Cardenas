@@ -109,30 +109,78 @@ export async function parseFinancialExcel(file: File): Promise<ParsingResult> {
 // --- Helpers ---
 
 function detectHeaders(grid: any[][]): { headerRowIndex: number, periodMap: Map<string, number> } {
-    // Look in first 10 rows
+    /**
+     * BULLETPROOF HEADER DETECTION
+     * Strategy:
+     * 1. Scan first 10 rows for ANY cell containing a year (2020-2030) or date pattern
+     * 2. Extract the year/date even if surrounded by other text (e.g., "31/Oct/2025 M$")
+     * 3. If no dates found, fall back to detecting numeric columns
+     */
+
     for (let r = 0; r < Math.min(grid.length, 10); r++) {
         const row = grid[r];
         const map = new Map<string, number>();
         let foundDate = false;
 
         row.forEach((cell: any, colIdx: number) => {
-            if (colIdx < 1) return; // Skip First column (usually desc)
-            const valStr = String(cell).trim();
+            if (colIdx < 1) return; // Skip first column (usually description)
+            const valStr = String(cell || '').trim();
+            if (!valStr) return;
 
-            // Regex for years (2020-2030) or dates (31/12/...)
-            const isYear = /20[2-3][0-9]/.test(valStr);
-            const isDate = /\d{1,2}[\/\-][A-Za-z0-9]{3}[\/\-]\d{2,4}/.test(valStr); // 31/Oct/2025
+            // Extract ANY 4-digit year (2020-2030)
+            const yearMatch = valStr.match(/20[2-3][0-9]/);
 
-            if (isYear || isDate) {
-                map.set(valStr, colIdx);
+            // Extract date patterns: 31/Oct/2025, 31-Oct-2025, 31/10/2025, etc.
+            const dateMatch = valStr.match(/\d{1,2}[\\/\-](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|[A-Za-z]{3}|\d{1,2})[\\/\-]\d{2,4}/i);
+
+            if (yearMatch || dateMatch) {
+                // Use the FULL cell value as the period key (e.g., "31/Oct/2025 M$")
+                // But clean it slightly for display
+                const periodKey = valStr.replace(/\s*M\$\s*/gi, '').trim() || valStr;
+                map.set(periodKey, colIdx);
                 foundDate = true;
             }
         });
 
-        if (foundDate) {
+        if (foundDate && map.size > 0) {
             return { headerRowIndex: r, periodMap: map };
         }
     }
+
+    // FALLBACK: If no dates found, detect numeric columns
+    // This handles cases where headers are just "2024" or "2025" or even missing
+    console.warn("No date headers found. Falling back to numeric column detection.");
+
+    for (let r = 0; r < Math.min(grid.length, 10); r++) {
+        const row = grid[r];
+        const map = new Map<string, number>();
+
+        row.forEach((cell: any, colIdx: number) => {
+            if (colIdx < 1) return;
+
+            // Check if this column has numeric data in the next few rows
+            let hasNumericData = false;
+            for (let checkRow = r + 1; checkRow < Math.min(r + 5, grid.length); checkRow++) {
+                const checkCell = grid[checkRow]?.[colIdx];
+                if (typeof checkCell === 'number' || (checkCell && !isNaN(parseFloat(String(checkCell).replace(/[^0-9.-]/g, ''))))) {
+                    hasNumericData = true;
+                    break;
+                }
+            }
+
+            if (hasNumericData) {
+                // Use column index as period name if no better name available
+                const cellValue = String(cell || '').trim();
+                const periodKey = cellValue || `Periodo_${colIdx}`;
+                map.set(periodKey, colIdx);
+            }
+        });
+
+        if (map.size > 0) {
+            return { headerRowIndex: r, periodMap: map };
+        }
+    }
+
     return { headerRowIndex: -1, periodMap: new Map() };
 }
 
