@@ -1,28 +1,36 @@
 @import "tailwindcss";
 
 :root {
-  /* Premium Dark Mode Colors */
-  --background: #020617;
-  /* Slate 950 */
-  --foreground: #f8fafc;
-  /* Slate 50 */
+  /* Refined Futurist Palette */
+  --background: #020617; /* Slate 950 */
+  --foreground: #f8fafc; /* Slate 50 */
 
-  --card: rgba(15, 23, 42, 0.6);
-  /* Slate 900 with opacity for glass */
-  --card-foreground: #f1f5f9;
+  --card: rgba(2, 6, 23, 0.7); /* Darker, more opaque */
+  --card-foreground: #f8fafc;
 
-  --primary: #6366f1;
-  /* Indigo 500 */
+  --popover: #020617;
+  --popover-foreground: #f8fafc;
+
+  --primary: #10b981; /* Emerald 500 - Digital Wealth */
   --primary-foreground: #ffffff;
 
-  --success: #10b981;
-  /* Emerald 500 */
-  --success-foreground: #ffffff;
+  --secondary: #1e293b; /* Slate 800 */
+  --secondary-foreground: #f8fafc;
 
-  --warning: #f59e0b;
-  /* Amber 500 */
-  --error: #ef4444;
-  /* Red 500 */
+  --muted: #334155; /* Slate 700 */
+  --muted-foreground: #94a3b8; /* Slate 400 */
+
+  --accent: #7c3aed; /* Violet 600 - Strategic Insight */
+  --accent-foreground: #ffffff;
+
+  --destructive: #ef4444; /* Red 500 */
+  --destructive-foreground: #ffffff;
+
+  --border: #1e293b; /* Slate 800 - Sharp borders */
+  --input: #1e293b;
+  --ring: #10b981;
+
+  --radius: 0rem; /* Sharp, precise corners */
 }
 
 @theme inline {
@@ -30,31 +38,61 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
-  --color-success: var(--success);
-  --color-warning: var(--warning);
-  --color-error: var(--error);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-display: var(--font-playfair);
+  --font-sans: var(--font-space); /* Technical look for body */
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-space), "Courier New", monospace; /* Default to Tech look */
   overflow-x: hidden;
-
-  /* Optimized Background */
-  background-color: var(--background);
-  /* Use a simpler, non-fixed gradient or just standard background */
-  background-image:
-    radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.08), transparent 40%);
   min-height: 100vh;
+  position: relative;
 }
 
-/* Glassmorphism Utilities */
+/* Texture Utility */
+.bg-grain {
+  position: relative;
+}
+.bg-grain::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.4;
+}
+
+/* Glassmorphism Utilities - Refined */
 .glass-panel {
   background: var(--card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.text-display {
+  font-family: var(--font-playfair);
 }
