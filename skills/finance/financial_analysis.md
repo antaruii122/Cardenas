@@ -1,119 +1,125 @@
 ---
 name: Financial Analysis Skill
 description: >
-  A comprehensive library of financial ratios, formulas, and "Mejoramientos" (Improvements) 
-  strategies tailored for Chilean PYMEs and general company analysis. 
-  This skill is the "Directives" layer source of truth.
+  Directives for the Expert Financial Analyst engine. Contains official formulas, 
+  interpretation logic (Traffic Lights), and strategic improvement advice 
+  tailored for Chilean SMEs (IFRS).
 ---
 
-# Financial Analysis Directives
+# Expert Financial Analysis Directives
 
-This document defines the standardized set of financial ratios and the logic for suggesting improvements ("Mejoramientos"). These definitions drive the `Orchestration` layer's analysis engine.
+This document acts as the **Logic Layer** for the Antigravity Financial Engine. 
+It defines HOW to calculate metrics and HOW to interpret them.
 
-## 1. Profitability Ratios (Rentabilidad)
-*Focus: Is the company making money?*
+## 1. Profitability Metrics (Rentabilidad)
+*Goal: Measure the company's ability to generate earnings relative to revenue, assets, and equity.*
 
 ### 1.1 Gross Margin (Margen Bruto)
-- **Formula:** `(Total Revenue - Cost of Goods Sold) / Total Revenue`
-- **Target (General):** > 30% (Varies by industry)
-- **Mejoramiento Logic:**
-    - `IF < 20%`: "Alerta: Costos directos muy altos. Revisar negociación con proveedores, merma de inventario o estructura de precios."
-    - `IF Trending Down`: "Precaución: El costo de venta está creciendo más rápido que las ventas."
+- **Formula**: `(Ingresos de Explotación - Costo de Ventas) / Ingresos de Explotación`
+- **Benchmark (General)**: > 30%
+- **Traffic Light**:
+    - 🟢 **Good**: > 30%
+    - 🟡 **Warning**: 15% - 30%
+    - 🔴 **Critical**: < 15%
+- **Insight Template**: "Tu Margen Bruto es del {value}%. {status_text}. Esto indica {interpretation}."
+- **Improvement Actions**: 
+    - "Renegociar costos con proveedores clave."
+    - "Revisar política de precios."
+    - "Auditar merma de inventario."
 
 ### 1.2 Operating Margin (Margen Operacional)
-- **Formula:** `(Operating Income / Total Revenue)`
-- **Target:** > 10%
-- **Mejoramiento Logic:**
-    - `IF < 5%`: "Crítico: La operación apenas cubre los gastos fijos. Revisar gastos administrativos (SG&A) y eficiencia operativa."
+- **Formula**: `Resultado Operacional / Ingresos de Explotación`
+- **Benchmark**: > 10%
+- **Traffic Light**:
+    - 🟢 > 10%
+    - 🟡 5% - 10%
+    - 🔴 < 5%
 
-### 1.3 EBITDA Margin
-- **Formula:** `(Internet Income + Interest + Taxes + Depreciation + Amortization) / Total Revenue`
-- **Target:** > 15%
-- **Mejoramiento Logic:**
-    - `IF < 10%`: "Baja generación de caja operativa. Evaluar si la estructura de personal es adecuada para el nivel de ventas."
+### 1.3 Net Margin (Margen Neto)
+- **Formula**: `Utilidad del Ejercicio / Ingresos de Explotación`
+- **Benchmark**: > 5%
+- **Traffic Light**:
+    - 🟢 > 8%
+    - 🟡 2% - 8%
+    - 🔴 < 2%
 
-### 1.4 Net Margin (Margen Neto)
-- **Formula:** `Net Income / Total Revenue`
-- **Target:** > 5%
-- **Mejoramiento Logic:**
-    - `IF Negative`: "Pérdida neta. Revisar carga financiera (intereses) y carga tributaria además de lo operacional."
+### 1.4 ROE (Return on Equity)
+- **Formula**: `Utilidad del Ejercicio / Patrimonio Total`
+- **Benchmark**: > 15%
+- **Traffic Light**:
+    - 🟢 > 15%
+    - 🟡 8% - 15%
+    - 🔴 < 8%
 
-### 1.5 ROA (Return on Assets)
-- **Formula:** `Net Income / Total Assets`
-- **Mejoramiento Logic:**
-    - `IF < IndustryAvg`: "Baja rotación de activos. ¿Tenemos maquinaria parada o exceso de inventario?"
+### 1.5 EBITDA Margin (Proxy)
+- **Formula**: `(Resultado Operacional + Depreciación + Amortización) / Ingresos de Explotación`
+- **Note**: If Dep/Amort not available, use Operating Margin as proxy floor.
 
 ---
 
-## 2. Liquidity Ratios (Liquidez)
-*Focus: Can the company pay its bills tomorrow?*
+## 2. Liquidity Metrics (Liquidez)
+*Goal: Measure ability to meet short-term obligations.*
 
 ### 2.1 Current Ratio (Razón Corriente)
-- **Formula:** `Current Assets / Current Liabilities`
-- **Target:** 1.5 - 2.0
-- **Mejoramiento Logic:**
-    - `IF < 1.0`: "Riesgo de Insolvencia: Los pasivos corto plazo superan los activos. Urgente: Refinanciar deuda a largo plazo o inyectar capital."
-    - `IF > 3.0`: "Exceso de Liquidez: Dinero ocioso. Evaluar reinversión o pago de dividendos."
+- **Formula**: `Activos Corrientes / Pasivos Corrientes`
+- **Benchmark**: 1.5 - 2.0
+- **Traffic Light**:
+    - 🟢 > 1.5 (Healthy)
+    - 🟡 1.0 - 1.5 (Tight)
+    - 🔴 < 1.0 (Insolvent - CRITICAL)
 
 ### 2.2 Quick Ratio (Prueba Ácida)
-- **Formula:** `(Current Assets - Inventory) / Current Liabilities`
-- **Target:** > 1.0
-- **Mejoramiento Logic:**
-    - `IF < 1.0`: "Dependencia de inventario. Si las ventas bajan, habrá problemas de caja."
-
-### 2.3 Working Capital (Capital de Trabajo)
-- **Formula:** `Current Assets - Current Liabilities`
-- **Mejoramiento Logic:**
-    - `IF Negative`: "Capital de Trabajo Negativo. Necesidad de financiamiento operativo inmediato."
+- **Formula**: `(Activos Corrientes - Inventarios) / Pasivos Corrientes`
+- **Benchmark**: > 1.0
+- **Traffic Light**:
+    - 🟢 > 1.0
+    - 🟡 0.6 - 1.0
+    - 🔴 < 0.6
 
 ---
 
-## 3. Efficiency Ratios (Eficiencia / Actividad)
-*Focus: How well are we using our resources?*
+## 3. Efficiency Metrics (Eficiencia)
+*Goal: Measure how well the company uses its assets.*
 
-### 3.1 Days Sales Outstanding (DSO / Días Calle)
-- **Formula:** `(Accounts Receivable / Total Credit Sales) * 365`
-- **Target:** < 45 days (Standard B2B terms)
-- **Mejoramiento Logic:**
-    - `IF > 60`: "Cobranza lenta. Implementar políticas de cobranza más estrictas, descuentos por pronto pago o factoring."
+### 3.1 Days Sales Outstanding (DSO)
+- **Formula**: `(Cuentas por Cobrar / Ingresos de Explotación) * 365`
+- **Benchmark**: < 45 days
+- **Traffic Light**:
+    - 🟢 < 45 days
+    - 🟡 45 - 60 days
+    - 🔴 > 60 days (Cash Trap)
 
-### 3.2 Inventory Turnover (Rotación de Inventario)
-- **Formula:** `Cost of Goods Sold / Average Inventory`
-- **Mejoramiento Logic:**
-    - `IF Low vs History`: "Inventario estancado. Realizar liquidaciones de stock obsoleto para liberar caja."
-
-### 3.3 Days Payable Outstanding (DPO / Días Proveedores)
-- **Formula:** `(Accounts Payable / Cost of Goods Sold) * 365`
-- **Mejoramiento Logic:**
-    - `IF < 30`: "Pagando muy rápido. Negociar mayores plazos con proveedores para mejorar el Cash Conversion Cycle."
+### 3.2 Inventory Turnover (Rotación Inventario)
+- **Formula**: `Costo de Ventas / Inventario Promedio`
+- **Benchmark**: Industry Dependent (High is usually better)
 
 ---
 
-## 4. Solvency Ratios (Endeudamiento)
-*Focus: Is the company over-leveraged?*
+## 4. Leverage Metrics (Solvencia)
+*Goal: Measure financial risk and debt levels.*
 
-### 4.1 Debt to Equity (Razón Deuda/Patrimonio)
-- **Formula:** `Total Liabilities / Shareholders' Equity`
-- **Target:** < 1.5
-- **Mejoramiento Logic:**
-    - `IF > 2.0`: "Alto apalancamiento financiero. Riesgo ante subidas de tasas de interés. Evaluar capitalización."
-
-### 4.2 Interest Coverage (Cobertura de Intereses)
-- **Formula:** `EBIT / Interest Expense`
-- **Target:** > 3.0
-- **Mejoramiento Logic:**
-    - `IF < 1.5`: "Peligro: El flujo operativo apenas cubre los intereses. Riesgo de default."
+### 4.1 Debt-to-Equity (Razón Deuda/Patrimonio)
+- **Formula**: `Pasivos Totales / Patrimonio Total`
+- **Benchmark**: < 1.5
+- **Traffic Light**:
+    - 🟢 < 1.0
+    - 🟡 1.0 - 2.0
+    - 🔴 > 2.0 (High Leverage Risk)
 
 ---
 
-## 5. Implementation Strategy (The 'How')
+## 5. Strategic Recommendations Engine
 
-### Data Requirement
-To calculate all above, the system needs inputs mapping to standard accounting lines:
-- **Income Statement Lines**: Revenue, COGS, OpEx (Admin, Sales), Depreciation, Interest, Taxes.
-- **Balance Sheet Lines**: Cash, AR, Inventory, Current Assets, Current Liabilities, Total Assets, Total Liabilities, Equity.
+The system should output specific advice based on the combination of flags:
 
-### "Mejoramientos" Engine
-The engine will run a `CheckRule(ratio_value)` function for each directive.
-- **Input**: Computed Ratio.
-- **Output**: Analysis Object `{ status: "OK" | "WARNING" | "CRITICAL", heading: string, description: string, action_item: string }`.
+1. **"The Profit Trap"** (High Gross Margin, Low Net Margin)
+   - *Diagnosis*: Your core business is healthy, but overhead or debt is eating your profits.
+   - *Action*: Audit SG&A (Administrative expenses) and refinance high-interest debt.
+
+2. **"The Cash Crunch"** (Profitable but Low Liquidity)
+   - *Diagnosis*: You are making money on paper but running out of cash.
+   - *Action*: Focus on collections (DSO) and inventory management. Growth is consuming your cash.
+
+3. **"The Distress Signal"** (Low Margins + High Debt)
+   - *Diagnosis*: Critical vulnerability.
+   - *Action*: Immediate restructuring required. Pause all CapEx. Focus strictly on cash generation.

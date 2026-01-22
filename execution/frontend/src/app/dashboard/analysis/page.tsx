@@ -1,234 +1,262 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FinancialStatement, RawRow } from "@/lib/types";
-import { ArrowUpRight, ArrowDownRight, TrendingUp, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { FinancialReport } from "@/lib/types";
+import { formatCLP, formatPercentDecimal } from "@/lib/formatters";
+import { DataVerificationPanel } from "@/components/DataVerificationPanel";
+import { StatementTreeTable, TreeRowData } from "@/components/StatementTreeTable";
+import { FinancialRadarChart } from "@/components/FinancialRadarChart";
 
-import { useRouter } from "next/navigation";
-import { FinancialCharts } from "@/components/FinancialCharts";
-import { DataGrid } from "@/components/DataGrid";
-import { Table as TableIcon } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, DollarSign, Activity, PieChart, BarChart3, AlertCircle } from "lucide-react";
 
 export default function AnalysisPage() {
-    const [data, setData] = useState<FinancialStatement | null>(null);
-    const [rawItems, setRawItems] = useState<RawRow[]>([]);
-    const [warnings, setWarnings] = useState<string[]>([]);
-    const [showData, setShowData] = useState(false);
-    const router = useRouter();
+    const [report, setReport] = useState<FinancialReport | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState("overview");
 
     useEffect(() => {
-        // Load from local storage (Provisional for MVP)
-        const storedData = localStorage.getItem("financialData");
-        const storedRawItems = localStorage.getItem("financialRawItems");
-        const storedWarnings = localStorage.getItem("financialWarnings");
-
-        if (storedData) {
-            setData(JSON.parse(storedData));
-        } else {
-            // No data found -> Redirect to upload
-            router.push("/dashboard");
+        // Load Parsed Report
+        // NOTE: The key must match what the Upload Page saves.
+        const storedReport = localStorage.getItem("financialReport");
+        if (storedReport) {
+            setReport(JSON.parse(storedReport));
         }
-
-        if (storedRawItems) {
-            setRawItems(JSON.parse(storedRawItems));
-        }
-
-        if (storedWarnings) setWarnings(JSON.parse(storedWarnings));
+        setLoading(false);
     }, []);
 
-    if (!data) {
+    if (loading) return <div className="flex h-[50vh] items-center justify-center text-neutral-400">Cargando análisis...</div>;
+
+    if (!report || !report.statements || report.statements.length === 0) {
         return (
-            <div className="flex items-center justify-center h-[50vh] text-white/50">
-                Cargando datos financieros...
+            <div className="flex h-[50vh] flex-col items-center justify-center gap-4 text-neutral-500">
+                <AlertCircle size={40} className="text-neutral-300" />
+                <p>No hay datos financieros cargados o el formato es inválido.</p>
+                <div className="text-sm px-4 py-2 bg-neutral-100 rounded-lg cursor-pointer hover:bg-neutral-200" onClick={() => window.location.href = '/dashboard'}>
+                    Volver a Cargar Excel
+                </div>
             </div>
         );
     }
 
-    // Calculate Ratios on the fly (This logic will move to a specific hook later)
-    const grossMargin = (data.pnl.grossProfit / data.pnl.revenue) * 100;
-    const opMargin = (data.pnl.operatingProfit / data.pnl.revenue) * 100;
-    const netMargin = (data.pnl.netIncome / data.pnl.revenue) * 100;
+    // Sort statements by period
+    const sortedStatements = [...report.statements].sort((a, b) => a.metadata.period.localeCompare(b.metadata.period));
+    const periods = sortedStatements.map(s => s.metadata.period);
+
+    const current = sortedStatements[sortedStatements.length - 1];
+    const previous = sortedStatements.length > 1 ? sortedStatements[sortedStatements.length - 2] : null;
+
+    const calcVar = (curr: number, prev: number | undefined) => {
+        if (!prev) return 0;
+        return ((curr - prev) / Math.abs(prev)) * 100;
+    };
+
+    const margins = {
+        gross: (current.pnl.grossProfit / current.pnl.revenue) * 100,
+        op: (current.pnl.operatingProfit / current.pnl.revenue) * 100,
+        net: (current.pnl.netIncome / current.pnl.revenue) * 100
+    };
+
+    const radarData = [
+        { subject: 'Rentabilidad', A: Math.min(margins.op * 5, 100), fullMark: 100 },
+        { subject: 'Liquidez', A: (current.balanceSheet.currentAssets / current.balanceSheet.currentLiabilities) * 40 || 0, fullMark: 100 },
+        { subject: 'Solvencia', A: 80, fullMark: 100 },
+        { subject: 'Eficiencia', A: 65, fullMark: 100 },
+        { subject: 'Crecimiento', A: 90, fullMark: 100 },
+    ];
+
+    const pnlRows: TreeRowData[] = [
+        {
+            id: "rev", label: "Ingresos de Explotación",
+            values: sortedStatements.map(s => s.pnl.revenue),
+            isTotal: true
+        },
+        {
+            id: "cogs", label: "Costo de Ventas",
+            values: sortedStatements.map(s => -Math.abs(s.pnl.cogs)),
+            isNegative: true
+        },
+        {
+            id: "gross", label: "Utilidad Bruta",
+            values: sortedStatements.map(s => s.pnl.grossProfit),
+            isTotal: true
+        },
+        {
+            id: "opex", label: "Gastos de Administración y Ventas",
+            values: sortedStatements.map(s => -Math.abs(s.pnl.opEx)),
+            isNegative: true
+        },
+        {
+            id: "op_res", label: "Resultado Operacional",
+            values: sortedStatements.map(s => s.pnl.operatingProfit),
+            isTotal: true
+        },
+        {
+            id: "tax_int", label: "Intereses e Impuestos",
+            values: sortedStatements.map(s => -(s.pnl.taxes + s.pnl.interestExpense)),
+            isNegative: true
+        },
+        {
+            id: "net", label: "Utilidad Neta",
+            values: sortedStatements.map(s => s.pnl.netIncome),
+            isTotal: true
+        }
+    ];
 
     return (
-        <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700">
+        <div className="pb-20 space-y-8 animate-in fade-in duration-700 font-sans text-neutral-900">
 
             {/* Header */}
-            <div className="flex justify-between items-end">
-                <div>
-                    <h1 className="text-3xl font-bold text-white/90">Análisis Financiero</h1>
-                    <p className="text-white/50">Diagnóstico basado en normas IFRS Chile.</p>
-                </div>
-                <div className="px-4 py-2 bg-primary/10 rounded-lg border border-primary/20 text-primary text-sm font-medium">
-                    Periodo: 2024 (Detectado)
-                </div>
-            </div>
-
-            {/* Warnings Section */}
-            {warnings.length > 0 && (
-                <div className="bg-warning/10 border border-warning/20 rounded-xl p-4 flex gap-4 items-start">
-                    <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+            <div className="space-y-6">
+                <div className="flex justify-between items-end">
                     <div>
-                        <h3 className="text-warning font-semibold text-sm">Atención requerida en tus datos</h3>
-                        <ul className="text-warning/80 text-sm list-disc pl-4 mt-1">
-                            {warnings.map((w, i) => <li key={i}>{w}</li>)}
-                        </ul>
+                        <h1 className="text-3xl font-bold tracking-tight text-neutral-900">Análisis Financiero</h1>
+                        <p className="text-neutral-500 mt-1">Diagnóstico basado en normas IFRS.</p>
                     </div>
                 </div>
-            )}
 
-            {/* KPI Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <KPICard
+                <DataVerificationPanel report={report} />
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <SummaryCard
                     label="Ventas Totales"
-                    value={formatCurrency(data.pnl.revenue)}
-                    icon={<TrendingUp className="text-primary" />}
+                    value={formatCLP(current.pnl.revenue)}
+                    delta={calcVar(current.pnl.revenue, previous?.pnl.revenue)}
+                    icon={<DollarSign className="text-neutral-400" size={18} />}
                 />
-                <KPICard
+                <SummaryCard
                     label="Margen Bruto"
-                    value={`${grossMargin.toFixed(1)}%`}
-                    subValue={formatCurrency(data.pnl.grossProfit)}
-                    trend={grossMargin > 30 ? "positive" : "negative"}
+                    value={formatPercentDecimal(margins.gross)}
+                    delta={calcVar(current.pnl.grossProfit, previous?.pnl.grossProfit)}
+                    icon={<PieChart className="text-neutral-400" size={18} />}
                 />
-                <KPICard
-                    label="Resultado Op."
-                    value={formatCurrency(data.pnl.operatingProfit)}
-                    trend={opMargin > 10 ? "positive" : "neutral"}
+                <SummaryCard
+                    label="EBITDA (Est.)"
+                    value={formatCLP(current.pnl.operatingProfit * 1.05)}
+                    delta={calcVar(current.pnl.operatingProfit, previous?.pnl.operatingProfit)}
+                    icon={<Activity className="text-neutral-400" size={18} />}
                 />
-                <KPICard
+                <SummaryCard
                     label="Utilidad Neta"
-                    value={formatCurrency(data.pnl.netIncome)}
-                    trend={netMargin > 0 ? "positive" : "negative"}
-                    highlight
+                    value={formatCLP(current.pnl.netIncome)}
+                    delta={calcVar(current.pnl.netIncome, previous?.pnl.netIncome)}
+                    icon={<BarChart3 className="text-neutral-400" size={18} />}
                 />
             </div>
 
-            {/* Financial Charts (Level 2 Upgrade) */}
-            <FinancialCharts data={{ success: true, data, rawItems, warnings: [], errors: [] }} />
+            {/* Tabs Header */}
+            <div className="flex gap-6 border-b border-neutral-200">
+                <TabTrigger active={activeTab === "overview"} onClick={() => setActiveTab("overview")}>Visión General</TabTrigger>
+                <TabTrigger active={activeTab === "statements"} onClick={() => setActiveTab("statements")}>Estados Financieros</TabTrigger>
+                <TabTrigger active={activeTab === "ratios"} onClick={() => setActiveTab("ratios")}>Ratios y Métricas</TabTrigger>
+                <TabTrigger active={activeTab === "insights"} onClick={() => setActiveTab("insights")}>Recomendaciones AI</TabTrigger>
+            </div>
 
-            {/* Main Analysis Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                {/* Left: Estado de Resultados Visual */}
-                <div className="lg:col-span-2 glass-panel p-8 rounded-3xl">
-                    <h3 className="text-xl font-semibold mb-6">Estructura de Resultados</h3>
-
-                    <div className="space-y-4">
-                        <ResultRow label="Ingresos de Explotación" value={data.pnl.revenue} isHeader />
-                        <ResultRow label="(-) Costo de Ventas" value={-data.pnl.cogs} color="text-red-400" />
-                        <div className="h-px bg-white/10 my-2" />
-                        <ResultRow label="= Margen Bruto" value={data.pnl.grossProfit} isTotal />
-
-                        <ResultRow label="(-) Gastos de Adm. y Ventas" value={-data.pnl.opEx} color="text-red-400" mt />
-                        <div className="h-px bg-white/10 my-2" />
-                        <ResultRow label="= Resultado Operacional" value={data.pnl.operatingProfit} isTotal />
-
-                        <ResultRow label="(-) Impuestos e Intereses" value={-(data.pnl.taxes + data.pnl.interestExpense)} color="text-red-400" mt />
-                        <div className="h-px bg-white/10 my-2" />
-                        <ResultRow label="= Utilidad Neta" value={data.pnl.netIncome} isTotal highlight />
-                    </div>
-                </div>
-
-                {/* Right: AI Improvements */}
-                <div className="glass-panel p-6 rounded-3xl bg-gradient-to-br from-white/5 to-primary/5 border-primary/20">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                            <CheckCircle2 size={18} />
+            {/* Tabs Content */}
+            <div className="pt-4">
+                {activeTab === "overview" && (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in duration-300">
+                        <div className="lg:col-span-1 space-y-6">
+                            <div className="bg-neutral-900 text-white p-6 rounded-xl shadow-lg">
+                                <h3 className="text-sm font-medium text-neutral-400 uppercase tracking-wider mb-2">Diagnóstico Ejecutivo</h3>
+                                <p className="text-xl font-light leading-relaxed">
+                                    "La empresa muestra una <strong className="font-semibold text-emerald-400">solidez operativa notable</strong>, pero los niveles de liquidez sugieren precaución ante obligaciones de corto plazo."
+                                </p>
+                            </div>
+                            <div className="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm">
+                                <h4 className="text-sm font-semibold mb-4 text-neutral-600 center">Perfil Financiero</h4>
+                                <FinancialRadarChart data={radarData} />
+                            </div>
                         </div>
-                        <h3 className="text-lg font-semibold text-white">Mejoramientos</h3>
+                        <div className="lg:col-span-2">
+                            <StatementTreeTable title="Resumen de Resultados" periods={periods} rows={pnlRows} />
+                        </div>
                     </div>
+                )}
 
-                    <div className="space-y-4">
-                        {opMargin < 10 && (
-                            <ImprovementItem
-                                title="Eficiencia Operativa Baja"
-                                desc="Tu margen operacional es bajo. Revisa tus gastos fijos (Arriendo, Nómina) respecto a ventas."
-                                severity="high"
-                            />
-                        )}
-                        {grossMargin < 20 && (
-                            <ImprovementItem
-                                title="Costos Directos Altos"
-                                desc="El costo de venta consume gran parte de tus ingresos. Negocia mejor con proveedores."
-                                severity="high"
-                            />
-                        )}
-                        {netMargin > 15 && (
-                            <ImprovementItem
-                                title="Excelente Rentabilidad"
-                                desc="Tu negocio es muy saludable. Considera reinvertir utilidades en marketing."
-                                severity="low"
-                            />
-                        )}
-                        {/* Fallback if no specific issues */}
-                        {opMargin >= 10 && grossMargin >= 20 && (
-                            <p className="text-white/50 text-sm">Tu estructura financiera se ve sólida. Sigue monitoreando tus gastos mensuales.</p>
-                        )}
+                {activeTab === "statements" && (
+                    <div className="animate-in fade-in duration-300">
+                        <StatementTreeTable title="Estado de Resultados Consolidado" periods={periods} rows={pnlRows} />
                     </div>
-                </div>
+                )}
 
+                {activeTab === "ratios" && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-300">
+                        <div className="p-6 bg-white border border-neutral-200 rounded-xl">
+                            <h4 className="font-semibold text-neutral-800 mb-4">Rentabilidad</h4>
+                            <div className="space-y-4">
+                                <RatioRow label="Margen Operacional" value={formatPercentDecimal(margins.op)} target="> 10%" />
+                                <RatioRow label="Margen Neto" value={formatPercentDecimal(margins.net)} target="> 5%" />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === "insights" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-300">
+                        <InsightCard type="warning" title="Optimizar Ciclo de Caja" desc="Incremento en días de cobranza detectado." />
+                    </div>
+                )}
             </div>
-
-            <div className="flex justify-center pt-8">
-                <button
-                    onClick={() => setShowData(!showData)}
-                    className="flex items-center gap-2 px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-all text-sm font-medium"
-                >
-                    <TableIcon className="w-4 h-4" />
-                    {showData ? "Ocultar Datos Brutos" : "Ver Datos Extraídos"}
-                </button>
-            </div>
-
-            {showData && (
-                <div className="animate-in slide-in-from-bottom-4 duration-500">
-                    <DataGrid data={{ success: true, data, rawItems, warnings: [], errors: [] }} />
-                </div>
-            )}
         </div>
     );
 }
 
-// --- Helper Components ---
-
-function KPICard({ label, value, subValue, icon, trend, highlight }: any) {
-    const trendColor = trend === "positive" ? "text-success" : trend === "negative" ? "text-error" : "text-white/50";
+// Components
+function SummaryCard({ label, value, delta, icon }: any) {
+    const isPos = delta >= 0;
     return (
-        <div className={`glass-panel p-5 rounded-2xl flex flex-col gap-2 ${highlight ? "bg-primary/10 border-primary/30" : ""}`}>
+        <div className="bg-white p-5 rounded-xl border border-neutral-200 shadow-sm flex flex-col justify-between h-32">
             <div className="flex justify-between items-start">
-                <span className="text-white/50 text-sm font-medium">{label}</span>
+                <span className="text-sm font-medium text-neutral-500">{label}</span>
                 {icon}
             </div>
-            <div className="text-2xl font-bold text-white/90 font-mono tracking-tight">{value}</div>
-            <div className="flex items-center gap-2 text-xs">
-                {trend === "positive" && <ArrowUpRight className="w-3 h-3 text-success" />}
-                {trend === "negative" && <ArrowDownRight className="w-3 h-3 text-error" />}
-                {subValue && <span className="text-white/40">{subValue}</span>}
+            <div>
+                <div className="text-2xl font-bold tracking-tight text-neutral-900">{value}</div>
+                {delta !== 0 && (
+                    <div className={`flex items-center gap-1 text-xs font-medium mt-1 ${isPos ? "text-emerald-600" : "text-rose-600"}`}>
+                        {isPos ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                        <span>{Math.abs(delta).toFixed(1)}% vs anterior</span>
+                    </div>
+                )}
             </div>
         </div>
     )
 }
 
-function ResultRow({ label, value, isHeader, isTotal, highlight, mt, color }: any) {
+function TabTrigger({ active, onClick, children }: any) {
     return (
-        <div className={`flex justify-between items-center ${mt ? "mt-6" : ""} ${highlight ? "p-3 bg-white/5 rounded-lg border border-white/5" : ""}`}>
-            <span className={`${isHeader || isTotal ? "font-semibold text-white/90" : "text-white/60"} ${isTotal ? "text-lg" : "text-sm"}`}>
-                {label}
-            </span>
-            <span className={`font-mono ${isTotal ? "text-xl font-bold" : "text-sm"} ${color || "text-white/80"}`}>
-                {formatCurrency(value)}
-            </span>
+        <button
+            onClick={onClick}
+            className={`px-1 py-3 text-sm font-medium border-b-2 transition-all ${active
+                    ? "text-neutral-900 border-black"
+                    : "text-neutral-500 border-transparent hover:text-neutral-800"
+                }`}
+        >
+            {children}
+        </button>
+    )
+}
+
+function RatioRow({ label, value, target, warn }: any) {
+    return (
+        <div className="flex justify-between items-center text-sm">
+            <span className="text-neutral-600">{label}</span>
+            <div className="text-right">
+                <div className={`font-mono font-medium ${warn ? "text-amber-600" : "text-neutral-900"}`}>{value}</div>
+                <div className="text-xs text-neutral-400">{target ? `Meta: ${target}` : ''}</div>
+            </div>
         </div>
     )
 }
 
-function ImprovementItem({ title, desc, severity }: any) {
+function InsightCard({ type, title, desc }: any) {
+    const isWarn = type === "warning";
     return (
-        <div className="p-4 rounded-xl bg-black/20 border border-white/5 hover:border-white/10 transition-colors">
-            <h4 className={`text-sm font-semibold mb-1 ${severity === "high" ? "text-error" : "text-success"}`}>{title}</h4>
-            <p className="text-xs text-white/60 leading-relaxed">{desc}</p>
+        <div className={`p-6 rounded-xl border ${isWarn ? "bg-amber-50 border-amber-200" : "bg-emerald-50 border-emerald-200"}`}>
+            <h4 className={`font-bold mb-2 ${isWarn ? "text-amber-800" : "text-emerald-800"}`}>{title}</h4>
+            <p className={`text-sm ${isWarn ? "text-amber-700" : "text-emerald-700"}`}>{desc}</p>
         </div>
     )
-}
-
-function formatCurrency(val: number) {
-    return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(val);
 }

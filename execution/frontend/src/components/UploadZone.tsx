@@ -20,11 +20,9 @@ export function UploadZone() {
 
         const result = await parseFinancialExcel(file);
 
-        if (result.success && result.data) {
-            // PROVISIONAL: Save to localStorage for MVP
-            localStorage.setItem("financialData", JSON.stringify(result.data));
-            localStorage.setItem("financialRawItems", JSON.stringify(result.rawItems)); // Save Raw Items
-            localStorage.setItem("financialWarnings", JSON.stringify(result.warnings));
+        if (result.success && result.report) {
+            // Updated for Multi-Period Support
+            localStorage.setItem("financialReport", JSON.stringify(result.report));
             router.push("/dashboard/analysis");
         } else {
             setIsProcessing(false);

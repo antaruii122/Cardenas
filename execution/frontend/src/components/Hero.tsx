@@ -25,7 +25,7 @@ export function Hero() {
                     className="inline-flex items-center gap-2 px-3 py-1 rounded-none border border-primary/30 bg-primary/5 backdrop-blur-md mb-8"
                 >
                     <span className="w-1.5 h-1.5 bg-primary rounded-none animate-pulse" />
-                    <span className="text-xs font-mono uppercase tracking-[0.2em] text-primary">Sistema v2.0 Online</span>
+                    <span className="text-xs font-mono uppercase tracking-[0.2em] text-primary">Sistema v2.0 Operativo</span>
                 </motion.div>
 
                 {/* Headline */}
@@ -35,8 +35,8 @@ export function Hero() {
                     transition={{ duration: 0.8, delay: 0.4 }}
                     className="text-display text-5xl md:text-8xl font-medium tracking-tight text-white mb-6 leading-[1.1]"
                 >
-                    Precisión Financiera <br />
-                    <span className="italic text-white/50">para los Audaces.</span>
+                    Inteligencia Financiera <br />
+                    <span className="italic text-white/50">Sin Compromisos.</span>
                 </motion.h1>
 
                 {/* Subheadline */}
@@ -46,9 +46,9 @@ export function Hero() {
                     transition={{ duration: 0.8, delay: 0.6 }}
                     className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-12 font-light leading-relaxed"
                 >
-                    Deja de adivinar. Transforma tu Estado de Resultados en una sala de guerra táctica.
+                    Convierte tu Estado de Resultados en un motor de decisiones estratégicas.
                     <br className="hidden md:block" />
-                    Matemática rigurosa. IA Estratégica. Cero relleno.
+                    Sin adivinanzas. Solo matemática rigurosa y claridad total.
                 </motion.p>
 
                 {/* CTAs */}
@@ -62,7 +62,7 @@ export function Hero() {
                         href="/dashboard"
                         className="group relative h-12 px-8 flex items-center bg-primary text-black hover:bg-white transition-colors duration-300 font-medium tracking-wide"
                     >
-                        <span>Analizar Ahora</span>
+                        <span>Comenzar Análisis</span>
                         <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </Link>
 
