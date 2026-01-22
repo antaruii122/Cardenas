@@ -65,6 +65,8 @@ export default function AnalysisPage() {
         { subject: 'Solvencia', A: 80, fullMark: 100 },
         { subject: 'Eficiencia', A: 65, fullMark: 100 },
         { subject: 'Crecimiento', A: 90, fullMark: 100 },
+    ];
+
     const pnlRows = [
         { id: "rev", label: "Ingresos de Explotación", values: sortedStatements.map(s => s.pnl.revenue), isTotal: true },
         { id: "cogs", label: "Costo de Ventas", values: sortedStatements.map(s => -Math.abs(s.pnl.cogs)), isNegative: true },
