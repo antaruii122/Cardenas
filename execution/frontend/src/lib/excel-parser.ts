@@ -300,7 +300,20 @@ function addToStatement(stmt: FinancialStatement, desc: string, val: number) {
     // If User Excel has "Cost: 100", our System expects "Cost: -100" or handle it in display?
     // Let's standarize: Expenses Negative in Storage.
 
-    if (matches(desc, PNL_MAPPINGS.revenue)) stmt.pnl.revenue += val;
+    // PRIORITY MATCHING: Check specific/calculated lines first to avoid "Revenue" catching "Other Income"
+
+    // 1. Calculated Lines (Explicit overrides if found in Excel)
+    if (matches(desc, PNL_MAPPINGS.grossProfit)) stmt.pnl.grossProfit = val;
+    else if (matches(desc, PNL_MAPPINGS.operatingProfit)) stmt.pnl.operatingProfit = val;
+    else if (matches(desc, PNL_MAPPINGS.netIncome)) stmt.pnl.netIncome = val;
+
+    // 2. Specific Line Items (Priority over broad buckets)
+    else if (matches(desc, PNL_MAPPINGS.otherIncome)) stmt.pnl.otherIncome += val;
+    else if (matches(desc, PNL_MAPPINGS.taxes)) stmt.pnl.taxes += val > 0 ? -val : val; // Taxes usually negative
+
+    // 3. Broad Buckets
+    // "Revenue" captures "Ingresos" but must NOT capture "Otros Ingresos" (handled above)
+    else if (matches(desc, PNL_MAPPINGS.revenue)) stmt.pnl.revenue += val;
 
     // COGS
     else if (matches(desc, PNL_MAPPINGS.cogs)) {
@@ -310,12 +323,6 @@ function addToStatement(stmt: FinancialStatement, desc: string, val: number) {
 
     // OpEx
     else if (matches(desc, PNL_MAPPINGS.opEx)) stmt.pnl.opEx += val > 0 ? -val : val;
-
-    // Specific Lines (Overrides)
-    else if (matches(desc, PNL_MAPPINGS.grossProfit)) stmt.pnl.grossProfit = val;
-    else if (matches(desc, PNL_MAPPINGS.operatingProfit)) stmt.pnl.operatingProfit = val;
-    else if (matches(desc, PNL_MAPPINGS.netIncome)) stmt.pnl.netIncome = val;
-    else if (matches(desc, PNL_MAPPINGS.taxes)) stmt.pnl.taxes += val > 0 ? -val : val;
 
     // Balance Sheet (Assets +, Liabs +, Equity +) -> Usually positive in BS
     // Using simple mapping based on keywords (Need new mappings in next step or use existing if robust)
