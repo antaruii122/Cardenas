@@ -78,7 +78,8 @@ export function calculateFinancialHealth(data: FinancialStatement): FinancialHea
     const inventory = bs?.inventory || 0;
     const totalAssets = bs?.totalAssets || 1;
     const totalLiabilities = bs?.totalLiabilities || 0;
-    const equity = bs?.equity || 1; // Avoid div by 0
+    const equity = bs?.shareholdersEquity || 1; // Avoid div by 0
+
 
     const revenue = pnl.revenue || 1;
     const cogs = pnl.cogs;
