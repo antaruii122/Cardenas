@@ -38,10 +38,36 @@ export default function FinancialUpload() {
 
             sheets.forEach(sheet => {
                 const ws = workbook.Sheets[sheet]
-                // Parse as HTML for realistic preview
+
+                // Pre-process cells to format numbers cleanly
+                // SheetJS uses the 'w' (formatted text) field for HTML output if present.
+                // We will forcefully format all numbers to avoid long decimals.
+                const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+                for (let R = range.s.r; R <= range.e.r; ++R) {
+                    for (let C = range.s.c; C <= range.e.c; ++C) {
+                        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                        const cell = ws[cellAddress];
+
+                        // If cell is a number type ('n') and has a raw value ('v')
+                        if (cell && cell.t === 'n' && typeof cell.v === 'number') {
+                            // Format logic: 
+                            // If it looks like an integer, show no decimals.
+                            // If it has decimals, show 2 max.
+                            // Uses Intl.NumberFormat for nice comma grouping "1,000,000"
+                            cell.w = new Intl.NumberFormat('es-CL', {
+                                maximumFractionDigits: 2,
+                                minimumFractionDigits: 0
+                            }).format(cell.v);
+
+                            // Important: sheet_to_html prefers 'w' if it exists.
+                        }
+                    }
+                }
+
+                // Parse as HTML with the new formatted values
                 const html = XLSX.utils.sheet_to_html(ws, { id: 'excel-preview-table', editable: false })
-                previews[sheet] = html as any // Cast to satisfy type temporarily or update interface
-                initialSelection[sheet] = 'Skip' // Default to Skip
+                previews[sheet] = html as any
+                initialSelection[sheet] = 'Skip'
             })
 
             setSheetPreviews(previews)
@@ -240,10 +266,37 @@ export default function FinancialUpload() {
                             </div>
 
                             {/* HTML Preview */}
-                            <div className="flex-1 overflow-auto custom-scrollbar p-6 bg-white">
+                            <div className="flex-1 overflow-auto custom-scrollbar p-6 bg-[#0f1014] relative">
+                                {/* Inject Custom Styles for Excel Table */}
+                                <style jsx global>{`
+                                    #excel-preview-table {
+                                        width: 100%;
+                                        border-collapse: collapse;
+                                        font-family: 'Inter', sans-serif;
+                                        font-size: 12px;
+                                        color: #9ca3af;
+                                    }
+                                    #excel-preview-table td, #excel-preview-table th {
+                                        border: 1px solid rgba(255,255,255,0.1);
+                                        padding: 8px 12px;
+                                        white-space: nowrap;
+                                    }
+                                    #excel-preview-table tr:first-child td {
+                                        font-weight: bold;
+                                        color: #e5e7eb;
+                                        background-color: rgba(255,255,255,0.05);
+                                        position: sticky;
+                                        top: 0;
+                                        z-index: 10;
+                                    }
+                                    #excel-preview-table tr:hover td {
+                                        background-color: rgba(255,255,255,0.02);
+                                    }
+                                `}</style>
+
                                 {sheetPreviews[activeTab] ? (
                                     <div
-                                        className="excel-preview-content text-black text-xs"
+                                        className="excel-preview-content"
                                         dangerouslySetInnerHTML={{ __html: sheetPreviews[activeTab] as unknown as string }}
                                     />
                                 ) : (
