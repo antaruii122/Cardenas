@@ -56,12 +56,12 @@ export function SmartTable({
     }, [data, validIndices]);
 
     return (
-        <div className={cn("relative w-full h-full flex flex-col bg-[#0f1014]", className)}>
+        <div className={cn("relative w-full h-full bg-[#0f1014]", className)}>
             {/* 
                 Use native scroll behavior. 
                 'overscroll-none' prevents parent page scroll hijacking.
             */}
-            <div className="flex-1 overflow-auto relative overscroll-none scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+            <div className="w-full h-full overflow-auto relative overscroll-none scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
                 <table className="w-max text-xs text-left border-separate border-spacing-0 text-gray-300">
                     <thead className="bg-[#0f1014] text-gray-200 font-bold sticky top-0 z-30">
                         <tr>

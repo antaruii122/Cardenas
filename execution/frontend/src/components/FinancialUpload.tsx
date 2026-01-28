@@ -365,7 +365,7 @@ export default function FinancialUpload() {
                             </div>
 
                             {/* Render Smart React Table */}
-                            <div className="flex-1 relative">
+                            <div className="flex-1 relative overflow-auto">
                                 {sheetPreviews[activeTab] && sheetPreviews[activeTab].length > 0 ? (
                                     <SmartTable
                                         headers={sheetPreviews[activeTab][0]}
