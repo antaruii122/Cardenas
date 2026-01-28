@@ -1,44 +1,48 @@
-# Plan de Implementación: Sistema de Análisis Financiero "Estados de Resultados"
+# Implementation Plan - Phase 4: Stylize (Frontend)
 
-## Goal Description
-Desarrollar una plataforma web de alto estándar estético ("High-End UI") y funcional que ingeste datos financieros (Excel - Estados de Resultados y Balance), calcule ratios complejos basándose en la skill `financial_analysis`, y provea diagnósticos inteligentes ("Mejoramientos") para el mercado chileno.
+# Goal Description
+Integrate the "Logic Layer" with the "Presentation Layer" (Next.js).
+Since the Logic Layer consists of Python tools, we will use an **Async Worker Pattern**:
+1.  **Frontend**: User uploads file -> Save to Supabase Storage -> Insert row in `financial_records` (Status: PENDING).
+2.  **Worker (Python)**: Orchestrator watches validation -> Downloads -> Parses -> Analyzes -> Updates Row (Status: COMPLETED).
+3.  **Frontend**: Real-time subscription to row updates -> Displays Dashboard.
 
 ## User Review Required
 > [!IMPORTANT]
-> **Website Design Strategy**: Confirming usage of **Next.js + TailwindCSS + Framer Motion** for a "Glassmorphism" / Premium aesthetic. Dark Mode by default is proposed for a professional financial look.
-
-> [!NOTE]
-> **Data Input**: The system requires mapping user Excel columns to our standard schema. We will build a flexible "Column Mapper" UI to handle different Excel formats.
+> **Architecture Update:** The Frontend will **not** process files directly. It will upload them to Supabase, and the Python tools (running as a background worker) will process them.
 
 ## Proposed Changes
 
-### Phase 0: Foundations & Skills (Completed/In-Progress)
-#### [NEW] [financial_analysis.md](file:///c:/Users/rcgir/Desktop/Proyecto con cardenas/Antigravity Cardenas chin project/skills/finance/financial_analysis.md)
-Comprehensive library of formulas (Profitability, Liquidity, Efficiency, Solvency).
+### Database Schema
+#### [MODIFY] `financial_records`
+- Add `status` column (PENDING, PROCESSING, COMPLETED, FAILED).
 
-### Phase 1: The "Beautiful Web" (Frontend Execution)
-#### [NEW] `execution/frontend/`
-- Initialize Next.js 14 (App Router).
-- **Design System**: Define colors (Slate/Zinc bases, Emerald for profits, Rose for losses), Typography (Inter or Geist).
-- **Components**:
-    - `HeroSection`: High impact landing with 3D abstract element or clean dashboard preview.
-    - `UploadWidget`: Drag & drop area with "scanning" animation.
-    - `DashboardGrid`: Bento-box style layout for metric cards.
+### Frontend (`execution/frontend`)
+#### [NEW] `src/utils/supabase/client.ts`
+- Standard Supabase Browser Client.
 
-### Phase 2: Orchestration Layer (The Logic)
-#### `orchestration/`
-- **Excel Parser**: Logic to read `.xlsx`.
-- **Mapper**: "Rosetta Stone" logic to map "Ventas Netas" (User) -> `Total Revenue` (System).
-- **Analyzer Engine**: TypeScript/Python logic that imports `financial_analysis` rules and applies them to the parsed data.
+#### [NEW] `src/components/FinancialUpload.tsx`
+- UI: Glassmorphism Card.
+- Action: Upload file to Bucket `financial_uploads` (Need to create bucket!).
+- Action: Insert row to `financial_records`.
 
-### Phase 3: Directives Integration
-- Implement the "Rules Engine" that takes the Analyzer output and generates the text descriptions for "Mejoramientos".
+#### [NEW] `src/app/dashboard/page.tsx`
+- UI: Glassmorphism Dashboard.
+- Fetches `financial_records`.
+- Displays KPIs from `analysis_payload`.
+- Shows "Mejoramientos" cards.
+
+### Storage
+#### [NEW] Bucket: `financial_documents`
+- Public/Private bucket for storing user uploads.
 
 ## Verification Plan
-### Automated Tests
-- **Unit Tests**: Verify that `Current Ratio` formula returns correct values for known inputs.
-- **Rule Tests**: Verify that specific threshold breaches trigger the correct "Mejoramiento" string.
-
-### Manual Verification
-- **Visual QA**: Verify animations are smooth (60fps) and responsive.
-- **User Flow**: Upload a sample "Sii_Balance_2024.xlsx", map columns, and verify the resulting Dashboard numbers match the Excel.
+1.  **Verify Status Column**: Check Supabase Table.
+2.  **Verify Bucket**: Check Supabase Storage.
+3.  **Frontend Test**:
+    - Start Next.js (`npm run dev`).
+    - Go to `/dashboard`.
+    - Upload File.
+    - Verify row created with `PENDING`.
+    - *Manually* run `orchestrator.py` (simulating worker).
+    - Verify row updates to `COMPLETED` on Frontend.

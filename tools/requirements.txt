@@ -1,0 +1,5 @@
+supabase
+pandas
+python-dotenv
+openpyxl
+# pdfplumber # Uncomment when needed
