@@ -323,7 +323,7 @@ export default function FinancialUpload() {
                     <div className="flex-1 flex">
 
                         {/* Sidebar: Sheets */}
-                        <div className="w-1/4 max-w-[280px] border-r border-white/10 bg-black/20 flex flex-col">
+                        <div className="w-[200px] border-r border-white/10 bg-black/20 flex flex-col shrink-0">
                             <div className="p-4 border-b border-white/5">
                                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Hojas Detectadas ({sheetNames.length})</p>
                             </div>
