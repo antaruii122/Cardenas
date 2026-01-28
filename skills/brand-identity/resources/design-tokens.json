@@ -1,0 +1,52 @@
+{
+    "colors": {
+        "primary": {
+            "emerald": "#10b981",
+            "cyan": "#06b6d4",
+            "gradient": "linear-gradient(to right, #10b981, #06b6d4)"
+        },
+        "semantic": {
+            "success": "#10b981",
+            "error": "#f43f5e",
+            "warning": "#f59e0b",
+            "info": "#3b82f6"
+        },
+        "background": {
+            "app": "#0f1014",
+            "surface": "rgba(255, 255, 255, 0.05)",
+            "surfaceHover": "rgba(255, 255, 255, 0.1)",
+            "modal": "rgba(0, 0, 0, 0.8)"
+        },
+        "text": {
+            "primary": "#ffffff",
+            "secondary": "#9ca3af",
+            "muted": "#6b7280",
+            "inverse": "#000000"
+        },
+        "border": {
+            "subtle": "rgba(255, 255, 255, 0.1)",
+            "highlight": "rgba(255, 255, 255, 0.2)"
+        }
+    },
+    "typography": {
+        "fontFamily": {
+            "sans": "Inter, sans-serif",
+            "mono": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+        }
+    },
+    "borderRadius": {
+        "lg": "0.75rem",
+        "xl": "1rem",
+        "2xl": "1.5rem"
+    },
+    "effects": {
+        "glassmorphism": {
+            "backdropFilter": "blur(12px)",
+            "backgroundColor": "rgba(255, 255, 255, 0.1)",
+            "border": "1px solid rgba(255, 255, 255, 0.2)"
+        },
+        "shadows": {
+            "glow": "0 0 15px rgba(16, 185, 129, 0.3)"
+        }
+    }
+}
