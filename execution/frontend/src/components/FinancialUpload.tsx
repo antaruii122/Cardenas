@@ -279,7 +279,7 @@ export default function FinancialUpload() {
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 flex overflow-hidden">
+                    <div className="flex-1 flex">
 
                         {/* Sidebar: Sheets */}
                         <div className="w-1/4 max-w-[280px] border-r border-white/10 bg-black/20 flex flex-col">
