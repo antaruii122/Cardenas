@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { Upload, FileUp, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import * as XLSX from 'xlsx'
@@ -296,8 +297,8 @@ export default function FinancialUpload() {
     }
 
     if (status === 'review') {
-        return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-200">
+        const modalContent = (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-200">
                 <div ref={modalRef} className={`bg-[#0f1014] border border-white/10 rounded-2xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-200 ${isFullscreen ? 'w-[98vw] h-[95vh]' : 'w-[95vw] h-[90vh]'}`}>
 
                     {/* Header */}
@@ -535,7 +536,10 @@ export default function FinancialUpload() {
                     )}
                 </div >
             </div >
-        )
+        );
+
+        // Use portal to render at document.body level (escapes dashboard layout)
+        return typeof window !== 'undefined' ? createPortal(modalContent, document.body) : null;
     }
 
     return (
