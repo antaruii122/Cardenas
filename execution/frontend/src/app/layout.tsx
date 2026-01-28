@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -27,7 +28,9 @@ export default function RootLayout({
       <body
         className={`${playfair.variable} ${spaceGrotesk.variable} antialiased bg-background text-foreground`}
       >
-        {children}
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
       </body>
     </html>
   );

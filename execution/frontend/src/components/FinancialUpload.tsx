@@ -5,11 +5,16 @@ import { Upload, FileUp, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import * as XLSX from 'xlsx'
 import { SmartTable } from './ui/SmartTable'
+import { useApiError } from '@/hooks/useErrorHandling'
+import { FileUploadError, DataProcessingError, DatabaseError } from '@/lib/errors'
 
 export default function FinancialUpload() {
     const [uploading, setUploading] = useState(false)
     const [status, setStatus] = useState<'idle' | 'review' | 'success' | 'error'>('idle')
     const [message, setMessage] = useState('')
+
+    // Error handling hook
+    const { showError, ErrorDisplay } = useApiError()
 
     // State for File Review
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -31,6 +36,35 @@ export default function FinancialUpload() {
         const file = e.target.files?.[0]
         if (!file) return
 
+        // Validate file size (10MB max)
+        const MAX_SIZE = 10 * 1024 * 1024;
+        if (file.size > MAX_SIZE) {
+            const error = new FileUploadError(
+                'El archivo excede el tamaño máximo de 10MB',
+                file.name,
+                { size: file.size, maxSize: MAX_SIZE }
+            );
+            showError(error);
+            return;
+        }
+
+        // Validate file type
+        const allowedTypes = [
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-excel',
+            'text/csv',
+            'application/pdf'
+        ];
+        if (!allowedTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls|csv|pdf)$/i)) {
+            const error = new FileUploadError(
+                'Tipo de archivo no válido. Por favor sube un archivo Excel, CSV o PDF',
+                file.name,
+                { type: file.type }
+            );
+            showError(error);
+            return;
+        }
+
         setSelectedFile(file)
         setUploading(true)
         setMessage('Analizando archivo...')
@@ -40,6 +74,13 @@ export default function FinancialUpload() {
             const workbook = XLSX.read(data)
 
             const sheets = workbook.SheetNames
+            if (sheets.length === 0) {
+                throw new DataProcessingError(
+                    'No se encontraron hojas en el archivo Excel',
+                    'parse'
+                );
+            }
+
             setSheetNames(sheets)
 
             // Generate previews for all sheets 
@@ -85,8 +126,20 @@ export default function FinancialUpload() {
 
         } catch (error) {
             console.error(error)
+
+            if (error instanceof FileUploadError || error instanceof DataProcessingError) {
+                showError(error);
+            } else {
+                const processError = new DataProcessingError(
+                    'Error al leer el archivo Excel',
+                    'parse',
+                    { originalError: error instanceof Error ? error.message : String(error) }
+                );
+                showError(processError);
+            }
+
             setStatus('error')
-            setMessage('Error al leer el archivo Excel')
+            setMessage('Error al procesar el archivo')
             setUploading(false)
         }
     }
@@ -122,7 +175,11 @@ export default function FinancialUpload() {
             .map(([sheet]) => sheet)
 
         if (sheetsToImport.length === 0) {
-            alert('Por favor selecciona al menos una hoja para importar.')
+            const error = new DataProcessingError(
+                'Por favor selecciona al menos una hoja para importar',
+                'validation'
+            );
+            showError(error);
             return
         }
 
@@ -138,7 +195,14 @@ export default function FinancialUpload() {
                 .from('financial_documents')
                 .upload(fileName, selectedFile)
 
-            if (uploadError) throw uploadError
+            if (uploadError) {
+                throw new DatabaseError(
+                    'storage upload',
+                    'No se pudo subir el archivo al almacenamiento',
+                    uploadError as Error,
+                    { fileName }
+                );
+            }
 
             // 2. Insert into DB with Metadata
             const { error: dbError } = await supabase
@@ -153,15 +217,35 @@ export default function FinancialUpload() {
                     }
                 })
 
-            if (dbError) throw dbError
+            if (dbError) {
+                throw new DatabaseError(
+                    'insert',
+                    'No se pudo guardar el registro en la base de datos',
+                    dbError as Error,
+                    { fileName, sheetsToImport }
+                );
+            }
 
             setStatus('success')
             setMessage('¡Archivo subido y procesado correctamente!')
 
         } catch (error: any) {
             console.error(error)
+
+            if (error instanceof DatabaseError) {
+                showError(error);
+            } else {
+                const dbError = new DatabaseError(
+                    'upload',
+                    error.message || 'Error al subir el archivo',
+                    error,
+                    { fileName: selectedFile.name }
+                );
+                showError(dbError);
+            }
+
             setStatus('error')
-            setMessage(error.message || 'Error al subir el archivo')
+            setMessage('Error al subir el archivo')
         } finally {
             setUploading(false)
         }
@@ -281,7 +365,7 @@ export default function FinancialUpload() {
                             </div>
 
                             {/* Render Smart React Table */}
-                            <div className="flex-1 overflow-hidden relative">
+                            <div className="flex-1 relative">
                                 {sheetPreviews[activeTab] && sheetPreviews[activeTab].length > 0 ? (
                                     <SmartTable
                                         headers={sheetPreviews[activeTab][0]}
@@ -357,6 +441,9 @@ export default function FinancialUpload() {
                     <h3 className="text-xl font-bold text-white tracking-tight">Cargar Estado de Resultados</h3>
                     <p className="text-sm text-gray-300">Arrastra tu Excel o PDF aquí para analizar</p>
                 </div>
+
+                {/* Error Display */}
+                {ErrorDisplay && <div className="w-full">{ErrorDisplay}</div>}
 
                 <div className="w-full">
                     <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/30 rounded-xl cursor-pointer hover:bg-white/5 transition-all group">
