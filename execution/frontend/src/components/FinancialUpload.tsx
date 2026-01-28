@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Upload, FileUp, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import * as XLSX from 'xlsx'
+import { SmartTable } from './ui/SmartTable'
 
 export default function FinancialUpload() {
     const [uploading, setUploading] = useState(false)
@@ -280,52 +281,22 @@ export default function FinancialUpload() {
                             </div>
 
                             {/* Render Smart React Table */}
-                            <div
-                                className="flex-1 overflow-auto bg-[#0f1014] relative select-text"
-                                style={{ userSelect: 'text', WebkitUserSelect: 'text', MozUserSelect: 'text', msUserSelect: 'text' }}
-                            >
-                                {/* Dark background for the table content */}
+                            <div className="flex-1 overflow-hidden relative">
                                 {sheetPreviews[activeTab] && sheetPreviews[activeTab].length > 0 ? (
-                                    <table
-                                        className="w-full text-xs text-left border-collapse text-gray-300 select-text"
-                                        style={{ userSelect: 'text', WebkitUserSelect: 'text', MozUserSelect: 'text', msUserSelect: 'text' }}
-                                    >
-                                        <thead className="bg-white/5 text-gray-200 font-bold sticky top-0 z-10 backdrop-blur-sm">
-                                            <tr>
-                                                {sheetPreviews[activeTab][0].map((header: any, i: number) => (
-                                                    <th
-                                                        key={i}
-                                                        className="px-4 py-3 border-b border-white/10 border-r last:border-r-0 whitespace-nowrap"
-                                                        style={{ userSelect: 'text', WebkitUserSelect: 'text', MozUserSelect: 'text', msUserSelect: 'text' }}
-                                                    >
-                                                        {header}
-                                                    </th>
-                                                ))}
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-white/5">
-                                            {sheetPreviews[activeTab].slice(1).map((row: any[], i: number) => (
-                                                <tr key={i} className={`transition-colors ${getRowStyle(activeTab, row)}`}>
-                                                    {row.map((cell: any, j: number) => {
-                                                        const cellStr = String(cell);
-                                                        const isNegative = cellStr.startsWith('-') || (cellStr.startsWith('(') && cellStr.endsWith(')'));
-                                                        return (
-                                                            <td
-                                                                key={j}
-                                                                className={`
-                                                                    px-4 py-2 border-r border-white/5 last:border-r-0 whitespace-nowrap min-w-[120px] select-text cursor-text
-                                                                    ${isNegative ? 'text-rose-400 font-medium' : ''}
-                                                                `}
-                                                                style={{ userSelect: 'text', WebkitUserSelect: 'text', MozUserSelect: 'text', msUserSelect: 'text' }}
-                                                            >
-                                                                {cell}
-                                                            </td>
-                                                        )
-                                                    })}
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                    <SmartTable
+                                        headers={sheetPreviews[activeTab][0]}
+                                        data={sheetPreviews[activeTab].slice(1)}
+                                        getRowClassName={(row: any[]) => getRowStyle(activeTab, row)}
+                                        renderCell={(cell: any) => {
+                                            const cellStr = String(cell);
+                                            const isNegative = cellStr.startsWith('-') || (cellStr.startsWith('(') && cellStr.endsWith(')'));
+                                            return (
+                                                <span className={`${isNegative ? 'text-rose-400 font-medium' : ''}`}>
+                                                    {cell}
+                                                </span>
+                                            )
+                                        }}
+                                    />
                                 ) : (
                                     <div className="h-full flex flex-col items-center justify-center text-gray-500 gap-4 opacity-50 bg-[#0f1014]">
                                         <div className="p-4 rounded-full bg-white/5">
