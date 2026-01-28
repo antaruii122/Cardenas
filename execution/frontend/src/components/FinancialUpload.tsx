@@ -280,10 +280,10 @@ export default function FinancialUpload() {
                             </div>
 
                             {/* Render Smart React Table */}
-                            <div className="flex-1 overflow-auto bg-[#0f1014] relative">
+                            <div className="flex-1 overflow-auto bg-[#0f1014] relative select-text">
                                 {/* Dark background for the table content */}
                                 {sheetPreviews[activeTab] && sheetPreviews[activeTab].length > 0 ? (
-                                    <table className="w-full text-xs text-left border-collapse text-gray-300">
+                                    <table className="w-full text-xs text-left border-collapse text-gray-300 select-text">
                                         <thead className="bg-white/5 text-gray-200 font-bold sticky top-0 z-10 backdrop-blur-sm">
                                             <tr>
                                                 {sheetPreviews[activeTab][0].map((header: any, i: number) => (
@@ -301,7 +301,7 @@ export default function FinancialUpload() {
                                                         const isNegative = cellStr.startsWith('-') || (cellStr.startsWith('(') && cellStr.endsWith(')'));
                                                         return (
                                                             <td key={j} className={`
-                                                                px-4 py-2 border-r border-white/5 last:border-r-0 whitespace-nowrap min-w-[120px]
+                                                                px-4 py-2 border-r border-white/5 last:border-r-0 whitespace-nowrap min-w-[120px] select-text cursor-text
                                                                 ${isNegative ? 'text-rose-400 font-medium' : ''}
                                                             `}>
                                                                 {cell}
