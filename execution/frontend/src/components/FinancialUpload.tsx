@@ -168,8 +168,8 @@ export default function FinancialUpload() {
 
     if (status === 'review') {
         return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-                <div className="w-full max-w-7xl h-[90vh] bg-[#0f1014] border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-200">
+                <div className="w-[95vw] h-[90vh] bg-[#0f1014] border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
 
                     {/* Header */}
                     <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/5">
@@ -296,11 +296,18 @@ export default function FinancialUpload() {
                                         <tbody className="divide-y divide-white/5">
                                             {sheetPreviews[activeTab].slice(1).map((row: any[], i: number) => (
                                                 <tr key={i} className={`transition-colors ${getRowStyle(activeTab, row)}`}>
-                                                    {row.map((cell: any, j: number) => (
-                                                        <td key={j} className="px-4 py-2 border-r border-white/5 last:border-r-0 whitespace-nowrap">
-                                                            {cell}
-                                                        </td>
-                                                    ))}
+                                                    {row.map((cell: any, j: number) => {
+                                                        const cellStr = String(cell);
+                                                        const isNegative = cellStr.startsWith('-') || (cellStr.startsWith('(') && cellStr.endsWith(')'));
+                                                        return (
+                                                            <td key={j} className={`
+                                                                px-4 py-2 border-r border-white/5 last:border-r-0 whitespace-nowrap min-w-[120px]
+                                                                ${isNegative ? 'text-rose-400 font-medium' : ''}
+                                                            `}>
+                                                                {cell}
+                                                            </td>
+                                                        )
+                                                    })}
                                                 </tr>
                                             ))}
                                         </tbody>
