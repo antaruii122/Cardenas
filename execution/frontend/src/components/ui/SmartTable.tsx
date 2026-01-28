@@ -62,7 +62,7 @@ export function SmartTable({
                 'overscroll-none' prevents parent page scroll hijacking.
             */}
             <div className="flex-1 overflow-auto relative overscroll-none scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
-                <table className="min-w-full text-xs text-left border-separate border-spacing-0 text-gray-300">
+                <table className="w-max text-xs text-left border-separate border-spacing-0 text-gray-300">
                     <thead className="bg-[#0f1014] text-gray-200 font-bold sticky top-0 z-30">
                         <tr>
                             {filteredHeaders.map((header, i) => (
