@@ -92,17 +92,18 @@ export default function FinancialUpload() {
 
     // Helper: Smart Row Styling
     const getRowStyle = (sheetName: string, row: any[]) => {
-        const firstCell = String(row[0] || '').toLowerCase();
+        // Join all cell text to check for keywords regardless of column position
+        const rowText = row.map(cell => String(cell || '').toLowerCase()).join(' ');
 
         // EERR Logic
         if (sheetName.toLowerCase().includes('eerr') || sheetName.toLowerCase().includes('resultados')) {
-            if (firstCell.includes('margen')) return 'bg-emerald-50/80 hover:bg-emerald-100/50';
-            if (firstCell.includes('ebitda') || firstCell.includes('utilidad') || firstCell.includes('resultado')) {
-                return 'bg-fuchsia-50/80 hover:bg-fuchsia-100/50';
+            if (rowText.includes('margen')) return 'bg-emerald-900/20 text-emerald-200 hover:bg-emerald-900/30';
+            if (rowText.includes('ebitda') || rowText.includes('utilidad') || rowText.includes('resultado')) {
+                return 'bg-fuchsia-900/20 text-fuchsia-200 hover:bg-fuchsia-900/30';
             }
         }
         // Default Hover
-        return 'hover:bg-gray-50';
+        return 'hover:bg-white/5';
     }
 
     const toggleSheetAction = (sheet: string, action: 'Import' | 'Skip') => {
@@ -279,24 +280,24 @@ export default function FinancialUpload() {
                             </div>
 
                             {/* Render Smart React Table */}
-                            <div className="flex-1 overflow-auto bg-white relative">
-                                {/* White paper background for the table content itself */}
+                            <div className="flex-1 overflow-auto bg-[#0f1014] relative">
+                                {/* Dark background for the table content */}
                                 {sheetPreviews[activeTab] && sheetPreviews[activeTab].length > 0 ? (
-                                    <table className="w-full text-xs text-left border-collapse">
-                                        <thead className="bg-gray-100 text-gray-700 font-bold sticky top-0 z-10 shadow-sm">
+                                    <table className="w-full text-xs text-left border-collapse text-gray-300">
+                                        <thead className="bg-white/5 text-gray-200 font-bold sticky top-0 z-10 backdrop-blur-sm">
                                             <tr>
                                                 {sheetPreviews[activeTab][0].map((header: any, i: number) => (
-                                                    <th key={i} className="px-4 py-3 border-b border-gray-300 border-r last:border-r-0 whitespace-nowrap bg-gray-100">
+                                                    <th key={i} className="px-4 py-3 border-b border-white/10 border-r last:border-r-0 whitespace-nowrap">
                                                         {header}
                                                     </th>
                                                 ))}
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-gray-200 text-gray-800">
+                                        <tbody className="divide-y divide-white/5">
                                             {sheetPreviews[activeTab].slice(1).map((row: any[], i: number) => (
                                                 <tr key={i} className={`transition-colors ${getRowStyle(activeTab, row)}`}>
                                                     {row.map((cell: any, j: number) => (
-                                                        <td key={j} className="px-4 py-2 border-r border-gray-200 last:border-r-0 whitespace-nowrap">
+                                                        <td key={j} className="px-4 py-2 border-r border-white/5 last:border-r-0 whitespace-nowrap">
                                                             {cell}
                                                         </td>
                                                     ))}
