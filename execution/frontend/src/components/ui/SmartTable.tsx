@@ -21,23 +21,32 @@ export function SmartTable({
     const validIndices = React.useMemo(() => {
         if (!data || data.length === 0) return headers.map((_, i) => i);
 
+        // Heuristic: Scan meaningful rows. 
+        // We scan ALL rows, but require at least ONE non-empty value.
+        // To be safer against "Title Rows" spanning empty columns (which might look like data but are just one-offs),
+        // we could require > 1 value if rows > 10? 
+        // For now, let's Stick to "Has ANY data" but rely on CSS to shrink empty-ish columns.
         const indices = new Set<number>();
         indices.add(0); // Always keep the first column
 
-        // Check each column index
         for (let colIndex = 1; colIndex < headers.length; colIndex++) {
-            const hasData = data.some(row => {
+            // Check headers too? Sometimes headers have text but no data.
+            // Let's check headers + data.
+            const headerHasContent = headers[colIndex] && String(headers[colIndex]).trim() !== '';
+
+            const dataHasContent = data.some(row => {
                 const cell = row[colIndex];
                 return cell !== undefined && cell !== null && String(cell).trim() !== '';
             });
-            if (hasData) {
+
+            if (headerHasContent || dataHasContent) {
                 indices.add(colIndex);
             }
         }
         return Array.from(indices).sort((a, b) => a - b);
     }, [data, headers]);
 
-    // 2. Filter Headers and Data
+    // ... filteredHeaders / filteredData logic remains ...
     const filteredHeaders = React.useMemo(() => {
         return validIndices.map(i => headers[i]);
     }, [headers, validIndices]);
@@ -46,10 +55,13 @@ export function SmartTable({
         return data.map(row => validIndices.map(i => row[i]));
     }, [data, validIndices]);
 
-
     return (
         <div className={cn("relative w-full h-full flex flex-col bg-[#0f1014]", className)}>
-            <div className="flex-1 overflow-auto relative custom-scrollbar">
+            {/* 
+                Use native scroll behavior. 
+                'overscroll-none' prevents parent page scroll hijacking.
+            */}
+            <div className="flex-1 overflow-auto relative overscroll-none scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
                 <table className="min-w-full text-xs text-left border-separate border-spacing-0 text-gray-300">
                     <thead className="bg-[#0f1014] text-gray-200 font-bold sticky top-0 z-30">
                         <tr>
@@ -58,6 +70,7 @@ export function SmartTable({
                                     key={i}
                                     className={cn(
                                         "px-4 py-3 border-b border-white/10 border-r border-white/5 last:border-r-0 whitespace-nowrap bg-[#1a1b20]",
+                                        // Sticky first column
                                         i === 0 && "sticky left-0 z-40 bg-[#1a1b20] border-r border-white/20 shadow-[2px_0_5px_rgba(0,0,0,0.4)]"
                                     )}
                                 >
@@ -79,7 +92,11 @@ export function SmartTable({
                                     <td
                                         key={j}
                                         className={cn(
-                                            "px-4 py-2 border-r border-white/5 last:border-r-0 whitespace-nowrap min-w-[120px]",
+                                            // Removing min-w-[120px] is CRITICAL to fixing the 'Gap' issue.
+                                            // 'whitespace-nowrap' ensures content isn't squashed.
+                                            // 'w-auto' allows the browser to decide.
+                                            "px-4 py-2 border-r border-white/5 last:border-r-0 whitespace-nowrap w-auto",
+                                            // Sticky first column styling
                                             j === 0 && "sticky left-0 z-20 bg-[#0f1014] font-medium text-gray-200 group-hover:bg-inherit border-r border-white/20 shadow-[2px_0_5px_rgba(0,0,0,0.4)]"
                                         )}
                                     >
