@@ -274,29 +274,31 @@ export default function FinancialUpload() {
                                         border-collapse: collapse;
                                         font-family: 'Inter', sans-serif;
                                         font-size: 12px;
-                                        color: #9ca3af;
+                                        color: #111827; /* Dark gray text */
+                                        background-color: #ffffff;
                                     }
                                     #excel-preview-table td, #excel-preview-table th {
-                                        border: 1px solid rgba(255,255,255,0.1);
+                                        border: 1px solid #e5e7eb; /* Light gray border */
                                         padding: 8px 12px;
                                         white-space: nowrap;
                                     }
                                     #excel-preview-table tr:first-child td {
                                         font-weight: bold;
-                                        color: #e5e7eb;
-                                        background-color: rgba(255,255,255,0.05);
+                                        color: #1f2937;
+                                        background-color: #f3f4f6; /* Light gray header */
                                         position: sticky;
                                         top: 0;
                                         z-index: 10;
+                                        border-bottom: 2px solid #d1d5db;
                                     }
                                     #excel-preview-table tr:hover td {
-                                        background-color: rgba(255,255,255,0.02);
+                                        background-color: #f9fafb;
                                     }
                                 `}</style>
 
                                 {sheetPreviews[activeTab] ? (
                                     <div
-                                        className="excel-preview-content"
+                                        className="rounded-lg overflow-hidden shadow-sm"
                                         dangerouslySetInnerHTML={{ __html: sheetPreviews[activeTab] as unknown as string }}
                                     />
                                 ) : (
@@ -308,90 +310,89 @@ export default function FinancialUpload() {
                                     </div>
                                 )}
                             </div>
-                        </div>
-                    </div>
 
-                    {/* Footer */}
-                    <div className="p-4 border-t border-white/10 bg-white/5 flex justify-between items-center">
-                        <div className="px-4 text-sm text-gray-400">
-                            <span className="text-emerald-400 font-bold">{Object.values(selectedSheets).filter(s => s === 'Import').length}</span> hojas seleccionadas para importar
-                        </div>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => { setStatus('idle'); setSelectedFile(null); }}
-                                className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleFinalizeUpload}
-                                disabled={uploading}
-                                className="px-8 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-black text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                            >
-                                {uploading ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                        Procesando...
-                                    </>
-                                ) : (
-                                    <>
-                                        Finalizar Importación
-                                        <Upload className="w-4 h-4 ml-1" />
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        )
+
+                            {/* Footer */}
+                            <div className="p-4 border-t border-white/10 bg-white/5 flex justify-between items-center">
+                                <div className="px-4 text-sm text-gray-400">
+                                    <span className="text-emerald-400 font-bold">{Object.values(selectedSheets).filter(s => s === 'Import').length}</span> hojas seleccionadas para importar
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => { setStatus('idle'); setSelectedFile(null); }}
+                                        className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleFinalizeUpload}
+                                        disabled={uploading}
+                                        className="px-8 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-black text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                    >
+                                        {uploading ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                Procesando...
+                                            </>
+                                        ) : (
+                                            <>
+                                                Finalizar Importación
+                                                <Upload className="w-4 h-4 ml-1" />
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </div >
+                    </div >
+                    )
     }
 
-    return (
-        <div className="w-full max-w-md p-8 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl">
-            <div className="flex flex-col items-center justify-center space-y-6">
-                <div className="p-4 rounded-full bg-gradient-to-tr from-emerald-400 to-cyan-500 shadow-lg">
-                    <Upload className="w-8 h-8 text-white" />
-                </div>
+                    return (
+                    <div className="w-full max-w-md p-8 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl">
+                        <div className="flex flex-col items-center justify-center space-y-6">
+                            <div className="p-4 rounded-full bg-gradient-to-tr from-emerald-400 to-cyan-500 shadow-lg">
+                                <Upload className="w-8 h-8 text-white" />
+                            </div>
 
-                <div className="text-center space-y-2">
-                    <h3 className="text-xl font-bold text-white tracking-tight">Cargar Estado de Resultados</h3>
-                    <p className="text-sm text-gray-300">Arrastra tu Excel o PDF aquí para analizar</p>
-                </div>
+                            <div className="text-center space-y-2">
+                                <h3 className="text-xl font-bold text-white tracking-tight">Cargar Estado de Resultados</h3>
+                                <p className="text-sm text-gray-300">Arrastra tu Excel o PDF aquí para analizar</p>
+                            </div>
 
-                <div className="w-full">
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/30 rounded-xl cursor-pointer hover:bg-white/5 transition-all group">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            {uploading ? (
-                                <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
-                            ) : (
-                                <FileUp className="w-8 h-8 text-gray-400 group-hover:text-white transition-colors" />
+                            <div className="w-full">
+                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/30 rounded-xl cursor-pointer hover:bg-white/5 transition-all group">
+                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                        {uploading ? (
+                                            <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+                                        ) : (
+                                            <FileUp className="w-8 h-8 text-gray-400 group-hover:text-white transition-colors" />
+                                        )}
+                                    </div>
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        onChange={handleFileSelect}
+                                        accept=".xlsx,.xls,.csv,.pdf"
+                                        disabled={uploading}
+                                    />
+                                </label>
+                            </div>
+
+                            {status === 'success' && (
+                                <div className="flex items-center space-x-2 text-emerald-400 animate-in fade-in slide-in-from-bottom-2">
+                                    <CheckCircle className="w-5 h-5" />
+                                    <span className="text-sm font-medium">{message}</span>
+                                </div>
+                            )}
+
+                            {status === 'error' && (
+                                <div className="flex items-center space-x-2 text-rose-400 animate-in fade-in slide-in-from-bottom-2">
+                                    <AlertCircle className="w-5 h-5" />
+                                    <span className="text-sm font-medium">{message}</span>
+                                </div>
                             )}
                         </div>
-                        <input
-                            type="file"
-                            className="hidden"
-                            onChange={handleFileSelect}
-                            accept=".xlsx,.xls,.csv,.pdf"
-                            disabled={uploading}
-                        />
-                    </label>
-                </div>
-
-                {status === 'success' && (
-                    <div className="flex items-center space-x-2 text-emerald-400 animate-in fade-in slide-in-from-bottom-2">
-                        <CheckCircle className="w-5 h-5" />
-                        <span className="text-sm font-medium">{message}</span>
                     </div>
-                )}
-
-                {status === 'error' && (
-                    <div className="flex items-center space-x-2 text-rose-400 animate-in fade-in slide-in-from-bottom-2">
-                        <AlertCircle className="w-5 h-5" />
-                        <span className="text-sm font-medium">{message}</span>
-                    </div>
-                )}
-            </div>
-        </div>
-    )
+                    )
 }
