@@ -13,7 +13,7 @@ export default function FinancialUpload() {
     // State for File Review
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [sheetNames, setSheetNames] = useState<string[]>([])
-    const [sheetPreviews, setSheetPreviews] = useState<Record<string, any[]>>({})
+    const [sheetPreviews, setSheetPreviews] = useState<Record<string, string>>({})
     const [selectedSheets, setSelectedSheets] = useState<Record<string, 'Import' | 'Skip'>>({})
     const [activeTab, setActiveTab] = useState<string>('')
 
@@ -32,15 +32,15 @@ export default function FinancialUpload() {
             const sheets = workbook.SheetNames
             setSheetNames(sheets)
 
-            // Generate previews for all sheets (first 5 rows)
-            const previews: Record<string, any[]> = {}
+            // Generate previews for all sheets 
+            const previews: Record<string, string> = {}
             const initialSelection: Record<string, 'Import' | 'Skip'> = {}
 
             sheets.forEach(sheet => {
                 const ws = workbook.Sheets[sheet]
-                // Parse a small preview
-                const json = XLSX.utils.sheet_to_json(ws, { header: 1, range: 0, defval: '' })
-                previews[sheet] = json.slice(0, 6) // Header + 5 rows
+                // Parse as HTML for realistic preview
+                const html = XLSX.utils.sheet_to_html(ws, { id: 'excel-preview-table', editable: false })
+                previews[sheet] = html as any // Cast to satisfy type temporarily or update interface
                 initialSelection[sheet] = 'Skip' // Default to Skip
             })
 
@@ -232,42 +232,22 @@ export default function FinancialUpload() {
                                     <span className="text-white font-medium">{activeTab}</span>
                                 </div>
                                 <div className={`px-2 py-0.5 rounded text-xs border font-medium uppercase tracking-wider ${selectedSheets[activeTab] === 'Import'
-                                        ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-400'
-                                        : 'bg-rose-500/5 border-rose-500/20 text-rose-400'
+                                    ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-400'
+                                    : 'bg-rose-500/5 border-rose-500/20 text-rose-400'
                                     }`}>
                                     {selectedSheets[activeTab] === 'Import' ? 'Se Importará' : 'Se Omitirá'}
                                 </div>
                             </div>
 
-                            {/* Table */}
-                            <div className="flex-1 overflow-auto custom-scrollbar p-6">
-                                {sheetPreviews[activeTab]?.length > 0 ? (
-                                    <div className="border border-white/10 rounded-lg overflow-hidden">
-                                        <table className="w-full text-xs text-left text-gray-400">
-                                            <thead className="bg-white/5 text-gray-200 font-semibold uppercase tracking-wider">
-                                                <tr>
-                                                    {sheetPreviews[activeTab][0].map((header: any, i: number) => (
-                                                        <th key={i} className="px-4 py-3 whitespace-nowrap border-b border-white/10 bg-white/5 sticky top-0 backdrop-blur-sm">
-                                                            {header || `Col ${i + 1}`}
-                                                        </th>
-                                                    ))}
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-white/5">
-                                                {sheetPreviews[activeTab].slice(1).map((row: any[], i: number) => (
-                                                    <tr key={i} className="hover:bg-white/[0.02] transition-colors">
-                                                        {row.map((cell: any, j: number) => (
-                                                            <td key={j} className="px-4 py-3 whitespace-nowrap border-r border-white/5 last:border-r-0">
-                                                                {cell}
-                                                            </td>
-                                                        ))}
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                            {/* HTML Preview */}
+                            <div className="flex-1 overflow-auto custom-scrollbar p-6 bg-white">
+                                {sheetPreviews[activeTab] ? (
+                                    <div
+                                        className="excel-preview-content text-black text-xs"
+                                        dangerouslySetInnerHTML={{ __html: sheetPreviews[activeTab] as unknown as string }}
+                                    />
                                 ) : (
-                                    <div className="h-full flex flex-col items-center justify-center text-gray-500 gap-4 opacity-50">
+                                    <div className="h-full flex flex-col items-center justify-center text-gray-500 gap-4 opacity-50 bg-[#0f1014]">
                                         <div className="p-4 rounded-full bg-white/5">
                                             <FileUp className="w-8 h-8" />
                                         </div>
