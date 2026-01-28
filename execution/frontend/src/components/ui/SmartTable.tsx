@@ -95,9 +95,9 @@ export function SmartTable({
                                             // Removing min-w-[120px] is CRITICAL to fixing the 'Gap' issue.
                                             // 'whitespace-nowrap' ensures content isn't squashed.
                                             // 'w-auto' allows the browser to decide.
-                                            "px-4 py-2 border-r border-white/5 last:border-r-0 whitespace-nowrap w-auto",
+                                            "px-4 py-2 border-r border-white/5 last:border-r-0 whitespace-nowrap min-w-[120px]",
                                             // Sticky first column styling
-                                            j === 0 && "sticky left-0 z-20 bg-[#0f1014] font-medium text-gray-200 group-hover:bg-inherit border-r border-white/20 shadow-[2px_0_5px_rgba(0,0,0,0.4)]"
+                                            j === 0 && "min-w-[220px] sticky left-0 z-20 bg-[#0f1014] font-medium text-gray-200 group-hover:bg-inherit border-r border-white/20 shadow-[2px_0_5px_rgba(0,0,0,0.4)]"
                                         )}
                                     >
                                         {renderCell ? renderCell(cell, j, row, i) : cell}
