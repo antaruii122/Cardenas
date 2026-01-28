@@ -16,13 +16,44 @@ export function SmartTable({
     renderCell,
     className
 }: SmartTableProps) {
+    // 1. Calculate Valid Indices (columns that are not empty across all rows)
+    // We assume the first column (index 0) is always valid/important (Names/Labels)
+    const validIndices = React.useMemo(() => {
+        if (!data || data.length === 0) return headers.map((_, i) => i);
+
+        const indices = new Set<number>();
+        indices.add(0); // Always keep the first column
+
+        // Check each column index
+        for (let colIndex = 1; colIndex < headers.length; colIndex++) {
+            const hasData = data.some(row => {
+                const cell = row[colIndex];
+                return cell !== undefined && cell !== null && String(cell).trim() !== '';
+            });
+            if (hasData) {
+                indices.add(colIndex);
+            }
+        }
+        return Array.from(indices).sort((a, b) => a - b);
+    }, [data, headers]);
+
+    // 2. Filter Headers and Data
+    const filteredHeaders = React.useMemo(() => {
+        return validIndices.map(i => headers[i]);
+    }, [headers, validIndices]);
+
+    const filteredData = React.useMemo(() => {
+        return data.map(row => validIndices.map(i => row[i]));
+    }, [data, validIndices]);
+
+
     return (
         <div className={cn("relative w-full h-full flex flex-col bg-[#0f1014]", className)}>
             <div className="flex-1 overflow-auto relative custom-scrollbar">
-                <table className="w-full text-xs text-left border-separate border-spacing-0 text-gray-300">
+                <table className="min-w-full text-xs text-left border-separate border-spacing-0 text-gray-300">
                     <thead className="bg-[#0f1014] text-gray-200 font-bold sticky top-0 z-30">
                         <tr>
-                            {headers.map((header, i) => (
+                            {filteredHeaders.map((header, i) => (
                                 <th
                                     key={i}
                                     className={cn(
@@ -36,7 +67,7 @@ export function SmartTable({
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                        {data.map((row, i) => (
+                        {filteredData.map((row, i) => (
                             <tr
                                 key={i}
                                 className={cn(
@@ -59,7 +90,7 @@ export function SmartTable({
                         ))}
                     </tbody>
                 </table>
-                {data.length === 0 && (
+                {filteredData.length === 0 && (
                     <div className="h-40 flex items-center justify-center text-gray-500 text-sm">
                         No hay datos para mostrar
                     </div>
