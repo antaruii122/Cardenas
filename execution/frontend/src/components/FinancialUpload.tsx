@@ -280,14 +280,24 @@ export default function FinancialUpload() {
                             </div>
 
                             {/* Render Smart React Table */}
-                            <div className="flex-1 overflow-auto bg-[#0f1014] relative select-text">
+                            <div
+                                className="flex-1 overflow-auto bg-[#0f1014] relative select-text"
+                                style={{ userSelect: 'text', WebkitUserSelect: 'text', MozUserSelect: 'text', msUserSelect: 'text' }}
+                            >
                                 {/* Dark background for the table content */}
                                 {sheetPreviews[activeTab] && sheetPreviews[activeTab].length > 0 ? (
-                                    <table className="w-full text-xs text-left border-collapse text-gray-300 select-text">
+                                    <table
+                                        className="w-full text-xs text-left border-collapse text-gray-300 select-text"
+                                        style={{ userSelect: 'text', WebkitUserSelect: 'text', MozUserSelect: 'text', msUserSelect: 'text' }}
+                                    >
                                         <thead className="bg-white/5 text-gray-200 font-bold sticky top-0 z-10 backdrop-blur-sm">
                                             <tr>
                                                 {sheetPreviews[activeTab][0].map((header: any, i: number) => (
-                                                    <th key={i} className="px-4 py-3 border-b border-white/10 border-r last:border-r-0 whitespace-nowrap">
+                                                    <th
+                                                        key={i}
+                                                        className="px-4 py-3 border-b border-white/10 border-r last:border-r-0 whitespace-nowrap"
+                                                        style={{ userSelect: 'text', WebkitUserSelect: 'text', MozUserSelect: 'text', msUserSelect: 'text' }}
+                                                    >
                                                         {header}
                                                     </th>
                                                 ))}
@@ -300,10 +310,14 @@ export default function FinancialUpload() {
                                                         const cellStr = String(cell);
                                                         const isNegative = cellStr.startsWith('-') || (cellStr.startsWith('(') && cellStr.endsWith(')'));
                                                         return (
-                                                            <td key={j} className={`
-                                                                px-4 py-2 border-r border-white/5 last:border-r-0 whitespace-nowrap min-w-[120px] select-text cursor-text
-                                                                ${isNegative ? 'text-rose-400 font-medium' : ''}
-                                                            `}>
+                                                            <td
+                                                                key={j}
+                                                                className={`
+                                                                    px-4 py-2 border-r border-white/5 last:border-r-0 whitespace-nowrap min-w-[120px] select-text cursor-text
+                                                                    ${isNegative ? 'text-rose-400 font-medium' : ''}
+                                                                `}
+                                                                style={{ userSelect: 'text', WebkitUserSelect: 'text', MozUserSelect: 'text', msUserSelect: 'text' }}
+                                                            >
                                                                 {cell}
                                                             </td>
                                                         )
