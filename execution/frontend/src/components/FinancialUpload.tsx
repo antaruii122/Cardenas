@@ -128,134 +128,187 @@ export default function FinancialUpload() {
 
     if (status === 'review') {
         return (
-            <div className="w-full max-w-4xl p-8 rounded-2xl bg-[#0B0F17] border border-white/10 shadow-2xl">
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 className="text-2xl font-bold text-white">Revisar Archivo</h3>
-                        <p className="text-gray-400 text-sm">{selectedFile?.name}</p>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+                <div className="w-full max-w-6xl h-[85vh] bg-[#0f1014] border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/5">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400">
+                                <FileUp className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-white">Revisar Importación</h3>
+                                <p className="text-xs text-gray-400 font-mono">{selectedFile?.name}</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => { setStatus('idle'); setSelectedFile(null); }}
+                            className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                        >
+                            <span className="sr-only">Cerrar</span>
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
-                    <button
-                        onClick={() => { setStatus('idle'); setSelectedFile(null); }}
-                        className="text-gray-500 hover:text-white"
-                    >
-                        Cancelar
-                    </button>
-                </div>
 
-                <div className="grid grid-cols-12 gap-6">
-                    {/* Sidebar: Sheet List */}
-                    <div className="col-span-4 space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                        <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Hojas Detectadas</p>
-                        {sheetNames.map(sheet => (
-                            <div
-                                key={sheet}
-                                onClick={() => setActiveTab(sheet)}
-                                className={`
-                                    group p-3 rounded-lg border cursor-pointer transition-all duration-200
-                                    ${activeTab === sheet
-                                        ? 'bg-emerald-500/10 border-emerald-500/50'
-                                        : 'bg-white/5 border-white/5 hover:bg-white/10'}
-                                `}
-                            >
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className={`text-sm font-medium ${activeTab === sheet ? 'text-emerald-400' : 'text-gray-300'}`}>
-                                        {sheet}
-                                    </span>
-                                    {selectedSheets[sheet] === 'Import' && (
-                                        <CheckCircle className="w-4 h-4 text-emerald-500" />
-                                    )}
+                    {/* Content */}
+                    <div className="flex-1 flex overflow-hidden">
+
+                        {/* Sidebar: Sheets */}
+                        <div className="w-1/3 max-w-xs border-r border-white/10 bg-black/20 flex flex-col">
+                            <div className="p-4 border-b border-white/5">
+                                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Hojas Detectadas ({sheetNames.length})</p>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                                {sheetNames.map(sheet => {
+                                    const action = selectedSheets[sheet];
+                                    const isActive = activeTab === sheet;
+                                    return (
+                                        <div
+                                            key={sheet}
+                                            onClick={() => setActiveTab(sheet)}
+                                            className={`
+                                                group p-3 rounded-xl border cursor-pointer transition-all duration-200 relative overflow-hidden
+                                                ${isActive
+                                                    ? 'bg-white/5 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.1)]'
+                                                    : 'bg-transparent border-transparent hover:bg-white/5 hover:border-white/10'}
+                                            `}
+                                        >
+                                            <div className="flex justify-between items-center mb-3 relative z-10">
+                                                <span className={`text-sm font-medium truncate ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
+                                                    {sheet}
+                                                </span>
+                                                {action === 'Import' && (
+                                                    <div className="bg-emerald-500/10 p-1 rounded-full">
+                                                        <CheckCircle className="w-3 h-3 text-emerald-400" />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Segmented Control for Action */}
+                                            <div className="flex bg-black/40 rounded-lg p-1 relative z-10">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); toggleSheetAction(sheet, 'Skip'); }}
+                                                    className={`
+                                                        flex-1 text-[10px] py-1.5 rounded-md font-medium transition-all duration-200
+                                                        ${action === 'Skip'
+                                                            ? 'bg-rose-500/10 text-rose-400 shadow-sm'
+                                                            : 'text-gray-600 hover:text-gray-400'}
+                                                    `}
+                                                >
+                                                    Omitir
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); toggleSheetAction(sheet, 'Import'); }}
+                                                    className={`
+                                                        flex-1 text-[10px] py-1.5 rounded-md font-medium transition-all duration-200
+                                                        ${action === 'Import'
+                                                            ? 'bg-emerald-500/10 text-emerald-400 shadow-sm'
+                                                            : 'text-gray-600 hover:text-gray-400'}
+                                                    `}
+                                                >
+                                                    Importar
+                                                </button>
+                                            </div>
+
+                                            {/* Active Indicator Bar */}
+                                            {isActive && (
+                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500 to-cyan-500" />
+                                            )}
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Main Preview Area */}
+                        <div className="flex-1 flex flex-col bg-[#0f1014] relative">
+                            {/* Toolbar */}
+                            <div className="h-12 border-b border-white/10 flex items-center justify-between px-6 bg-white/5">
+                                <div className="flex items-center gap-2 text-sm text-gray-400">
+                                    <span className="opacity-50">Vista Previa:</span>
+                                    <span className="text-white font-medium">{activeTab}</span>
                                 </div>
-
-                                {/* Action Toggles */}
-                                <div className="flex bg-black/40 rounded-md p-0.5">
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); toggleSheetAction(sheet, 'Skip'); }}
-                                        className={`flex-1 text-[10px] py-1 rounded-sm transition-colors ${selectedSheets[sheet] === 'Skip' ? 'bg-rose-500/20 text-rose-400' : 'text-gray-500 hover:text-gray-300'}`}
-                                    >
-                                        Omitir
-                                    </button>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); toggleSheetAction(sheet, 'Import'); }}
-                                        className={`flex-1 text-[10px] py-1 rounded-sm transition-colors ${selectedSheets[sheet] === 'Import' ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-500 hover:text-gray-300'}`}
-                                    >
-                                        Importar
-                                    </button>
+                                <div className={`px-2 py-0.5 rounded text-xs border font-medium uppercase tracking-wider ${selectedSheets[activeTab] === 'Import'
+                                        ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-400'
+                                        : 'bg-rose-500/5 border-rose-500/20 text-rose-400'
+                                    }`}>
+                                    {selectedSheets[activeTab] === 'Import' ? 'Se Importará' : 'Se Omitirá'}
                                 </div>
                             </div>
-                        ))}
-                    </div>
 
-                    {/* Main Area: Preview */}
-                    <div className="col-span-8 bg-white/5 rounded-xl border border-white/10 p-4 min-h-[400px] flex flex-col">
-                        <div className="flex justify-between items-center mb-4">
-                            <h4 className="text-sm font-semibold text-white flex items-center gap-2">
-                                <FileUp className="w-4 h-4 text-emerald-400" />
-                                Vista Previa: {activeTab}
-                            </h4>
-                            <span className={`px-2 py-0.5 rounded text-xs border ${selectedSheets[activeTab] === 'Import'
-                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                                : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
-                                }`}>
-                                Estado: {selectedSheets[activeTab] === 'Import' ? 'Importar' : 'Omitir'}
-                            </span>
-                        </div>
-
-                        <div className="flex-1 overflow-auto custom-scrollbar border border-white/5 rounded-lg bg-black/20">
-                            {sheetPreviews[activeTab]?.length > 0 ? (
-                                <table className="w-full text-xs text-left text-gray-400">
-                                    <thead className="bg-white/5 text-gray-200">
-                                        <tr>
-                                            {sheetPreviews[activeTab][0].map((header: any, i: number) => (
-                                                <th key={i} className="px-3 py-2 font-medium whitespace-nowrap border-b border-white/10">
-                                                    {header || `Col ${i + 1}`}
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {sheetPreviews[activeTab].slice(1).map((row: any[], i: number) => (
-                                            <tr key={i} className="border-b border-white/5 hover:bg-white/5">
-                                                {row.map((cell: any, j: number) => (
-                                                    <td key={j} className="px-3 py-2 whitespace-nowrap">
-                                                        {cell}
-                                                    </td>
+                            {/* Table */}
+                            <div className="flex-1 overflow-auto custom-scrollbar p-6">
+                                {sheetPreviews[activeTab]?.length > 0 ? (
+                                    <div className="border border-white/10 rounded-lg overflow-hidden">
+                                        <table className="w-full text-xs text-left text-gray-400">
+                                            <thead className="bg-white/5 text-gray-200 font-semibold uppercase tracking-wider">
+                                                <tr>
+                                                    {sheetPreviews[activeTab][0].map((header: any, i: number) => (
+                                                        <th key={i} className="px-4 py-3 whitespace-nowrap border-b border-white/10 bg-white/5 sticky top-0 backdrop-blur-sm">
+                                                            {header || `Col ${i + 1}`}
+                                                        </th>
+                                                    ))}
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-white/5">
+                                                {sheetPreviews[activeTab].slice(1).map((row: any[], i: number) => (
+                                                    <tr key={i} className="hover:bg-white/[0.02] transition-colors">
+                                                        {row.map((cell: any, j: number) => (
+                                                            <td key={j} className="px-4 py-3 whitespace-nowrap border-r border-white/5 last:border-r-0">
+                                                                {cell}
+                                                            </td>
+                                                        ))}
+                                                    </tr>
                                                 ))}
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            ) : (
-                                <div className="flex items-center justify-center h-full text-gray-500">
-                                    Hoja vacía o sin datos detectados
-                                </div>
-                            )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <div className="h-full flex flex-col items-center justify-center text-gray-500 gap-4 opacity-50">
+                                        <div className="p-4 rounded-full bg-white/5">
+                                            <FileUp className="w-8 h-8" />
+                                        </div>
+                                        <p>No se encontraron datos en esta hoja</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div className="mt-6 flex justify-end gap-3 pt-6 border-t border-white/10">
-                    <button
-                        onClick={() => { setStatus('idle'); setSelectedFile(null); }}
-                        className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-white transition-colors"
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={handleFinalizeUpload}
-                        disabled={uploading}
-                        className="px-6 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-semibold shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                        {uploading ? (
-                            <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                Procesando...
-                            </>
-                        ) : (
-                            <>
-                                Finalizar Importación
-                            </>
-                        )}
-                    </button>
+                    {/* Footer */}
+                    <div className="p-4 border-t border-white/10 bg-white/5 flex justify-between items-center">
+                        <div className="px-4 text-sm text-gray-400">
+                            <span className="text-emerald-400 font-bold">{Object.values(selectedSheets).filter(s => s === 'Import').length}</span> hojas seleccionadas para importar
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => { setStatus('idle'); setSelectedFile(null); }}
+                                className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleFinalizeUpload}
+                                disabled={uploading}
+                                className="px-8 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-black text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                {uploading ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Procesando...
+                                    </>
+                                ) : (
+                                    <>
+                                        Finalizar Importación
+                                        <Upload className="w-4 h-4 ml-1" />
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         )
