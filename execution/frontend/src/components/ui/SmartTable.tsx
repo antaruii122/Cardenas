@@ -62,14 +62,14 @@ export function SmartTable({
                 'overscroll-none' prevents parent page scroll hijacking.
             */}
             <div className="w-full h-full overflow-auto relative overscroll-none scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
-                <table className="w-max text-xs text-left border-separate border-spacing-0 text-gray-300">
+                <table className="w-max text-[10px] text-left border-separate border-spacing-0 text-gray-300">
                     <thead className="bg-[#0f1014] text-gray-200 font-bold sticky top-0 z-30">
                         <tr>
                             {filteredHeaders.map((header, i) => (
                                 <th
                                     key={i}
                                     className={cn(
-                                        "px-4 py-3 border-b border-white/10 border-r border-white/5 last:border-r-0 whitespace-nowrap bg-[#1a1b20]",
+                                        "px-3 py-2 border-b border-white/10 border-r border-white/5 last:border-r-0 whitespace-nowrap bg-[#1a1b20]",
                                         // Sticky first column
                                         i === 0 && "sticky left-0 z-40 bg-[#1a1b20] border-r border-white/20 shadow-[2px_0_5px_rgba(0,0,0,0.4)]"
                                     )}
@@ -95,9 +95,9 @@ export function SmartTable({
                                             // Removing min-w-[120px] is CRITICAL to fixing the 'Gap' issue.
                                             // 'whitespace-nowrap' ensures content isn't squashed.
                                             // 'w-auto' allows the browser to decide.
-                                            "px-4 py-2 border-r border-white/5 last:border-r-0 whitespace-nowrap min-w-[120px]",
+                                            "px-3 py-1.5 border-r border-white/5 last:border-r-0 whitespace-nowrap min-w-[100px]",
                                             // Sticky first column styling
-                                            j === 0 && "min-w-[220px] sticky left-0 z-20 bg-[#0f1014] font-medium text-gray-200 group-hover:bg-inherit border-r border-white/20 shadow-[2px_0_5px_rgba(0,0,0,0.4)]"
+                                            j === 0 && "min-w-[180px] sticky left-0 z-20 bg-[#0f1014] font-medium text-gray-200 group-hover:bg-inherit border-r border-white/20 shadow-[2px_0_5px_rgba(0,0,0,0.4)]"
                                         )}
                                     >
                                         {renderCell ? renderCell(cell, j, row, i) : cell}

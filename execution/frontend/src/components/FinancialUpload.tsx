@@ -28,6 +28,9 @@ export default function FinancialUpload() {
     const modalRef = useRef<HTMLDivElement>(null)
     const tableContainerRef = useRef<HTMLDivElement>(null)
 
+    // Fullscreen mode
+    const [isFullscreen, setIsFullscreen] = useState(false)
+
     // Keyboard shortcut for debug mode
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -295,7 +298,7 @@ export default function FinancialUpload() {
     if (status === 'review') {
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-200">
-                <div ref={modalRef} className="w-[95vw] h-[90vh] bg-[#0f1014] border border-white/10 rounded-2xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-200">
+                <div ref={modalRef} className={`bg-[#0f1014] border border-white/10 rounded-2xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-200 ${isFullscreen ? 'w-[98vw] h-[95vh]' : 'w-[95vw] h-[90vh]'}`}>
 
                     {/* Header */}
                     <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/5">
@@ -308,86 +311,105 @@ export default function FinancialUpload() {
                                 <p className="text-xs text-gray-400 font-mono">{selectedFile?.name}</p>
                             </div>
                         </div>
-                        <button
-                            onClick={() => { setStatus('idle'); setSelectedFile(null); }}
-                            className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-                        >
-                            <span className="sr-only">Cerrar</span>
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setIsFullscreen(!isFullscreen)}
+                                className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                                title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+                            >
+                                {isFullscreen ? (
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                ) : (
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                    </svg>
+                                )}
+                            </button>
+                            <button
+                                onClick={() => { setStatus('idle'); setSelectedFile(null); }}
+                                className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                            >
+                                <span className="sr-only">Cerrar</span>
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Content */}
                     <div className="flex-1 flex">
 
-                        {/* Sidebar: Sheets */}
-                        <div className="w-[200px] border-r border-white/10 bg-black/20 flex flex-col shrink-0">
-                            <div className="p-4 border-b border-white/5">
-                                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Hojas Detectadas ({sheetNames.length})</p>
-                            </div>
-                            <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
-                                {sheetNames.map(sheet => {
-                                    const action = selectedSheets[sheet];
-                                    const isActive = activeTab === sheet;
-                                    return (
-                                        <div
-                                            key={sheet}
-                                            onClick={() => setActiveTab(sheet)}
-                                            className={`
+                        {/* Sidebar: Sheets - Hidden in fullscreen */}
+                        {!isFullscreen && (
+                            <div className="w-[200px] border-r border-white/10 bg-black/20 flex flex-col shrink-0">
+                                <div className="p-4 border-b border-white/5">
+                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Hojas Detectadas ({sheetNames.length})</p>
+                                </div>
+                                <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                                    {sheetNames.map(sheet => {
+                                        const action = selectedSheets[sheet];
+                                        const isActive = activeTab === sheet;
+                                        return (
+                                            <div
+                                                key={sheet}
+                                                onClick={() => setActiveTab(sheet)}
+                                                className={`
                                                 group p-3 rounded-xl border cursor-pointer transition-all duration-200 relative overflow-hidden
                                                 ${isActive
-                                                    ? 'bg-white/5 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.1)]'
-                                                    : 'bg-transparent border-transparent hover:bg-white/5 hover:border-white/10'}
+                                                        ? 'bg-white/5 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.1)]'
+                                                        : 'bg-transparent border-transparent hover:bg-white/5 hover:border-white/10'}
                                             `}
-                                        >
-                                            <div className="flex justify-between items-center mb-3 relative z-10">
-                                                <span className={`text-sm font-medium truncate ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
-                                                    {sheet}
-                                                </span>
-                                                {action === 'Import' && (
-                                                    <div className="bg-emerald-500/10 p-1 rounded-full">
-                                                        <CheckCircle className="w-3 h-3 text-emerald-400" />
-                                                    </div>
-                                                )}
-                                            </div>
+                                            >
+                                                <div className="flex justify-between items-center mb-3 relative z-10">
+                                                    <span className={`text-sm font-medium truncate ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
+                                                        {sheet}
+                                                    </span>
+                                                    {action === 'Import' && (
+                                                        <div className="bg-emerald-500/10 p-1 rounded-full">
+                                                            <CheckCircle className="w-3 h-3 text-emerald-400" />
+                                                        </div>
+                                                    )}
+                                                </div>
 
-                                            {/* Segmented Control for Action */}
-                                            <div className="flex bg-black/40 rounded-lg p-1 relative z-10">
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); toggleSheetAction(sheet, 'Skip'); }}
-                                                    className={`
+                                                {/* Segmented Control for Action */}
+                                                <div className="flex bg-black/40 rounded-lg p-1 relative z-10">
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); toggleSheetAction(sheet, 'Skip'); }}
+                                                        className={`
                                                         flex-1 text-[10px] py-1.5 rounded-md font-medium transition-all duration-200
                                                         ${action === 'Skip'
-                                                            ? 'bg-rose-500/10 text-rose-400 shadow-sm'
-                                                            : 'text-gray-600 hover:text-gray-400'}
+                                                                ? 'bg-rose-500/10 text-rose-400 shadow-sm'
+                                                                : 'text-gray-600 hover:text-gray-400'}
                                                     `}
-                                                >
-                                                    Omitir
-                                                </button>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); toggleSheetAction(sheet, 'Import'); }}
-                                                    className={`
+                                                    >
+                                                        Omitir
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); toggleSheetAction(sheet, 'Import'); }}
+                                                        className={`
                                                         flex-1 text-[10px] py-1.5 rounded-md font-medium transition-all duration-200
                                                         ${action === 'Import'
-                                                            ? 'bg-emerald-500/10 text-emerald-400 shadow-sm'
-                                                            : 'text-gray-600 hover:text-gray-400'}
+                                                                ? 'bg-emerald-500/10 text-emerald-400 shadow-sm'
+                                                                : 'text-gray-600 hover:text-gray-400'}
                                                     `}
-                                                >
-                                                    Importar
-                                                </button>
-                                            </div>
+                                                    >
+                                                        Importar
+                                                    </button>
+                                                </div>
 
-                                            {/* Active Indicator Bar */}
-                                            {isActive && (
-                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500 to-cyan-500" />
-                                            )}
-                                        </div>
-                                    )
-                                })}
+                                                {/* Active Indicator Bar */}
+                                                {isActive && (
+                                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500 to-cyan-500" />
+                                                )}
+                                            </div>
+                                        )
+                                    })}
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Smart Table Preview Area */}
                         <div className="flex-1 flex flex-col bg-[#0f1014] relative text-white">
