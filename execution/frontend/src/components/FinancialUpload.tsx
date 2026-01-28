@@ -13,16 +13,25 @@ export default function FinancialUpload() {
     // State for File Review
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [sheetNames, setSheetNames] = useState<string[]>([])
-    const [sheetPreviews, setSheetPreviews] = useState<Record<string, string>>({})
+    const [sheetPreviews, setSheetPreviews] = useState<Record<string, any[][]>>({})
     const [selectedSheets, setSelectedSheets] = useState<Record<string, 'Import' | 'Skip'>>({})
     const [activeTab, setActiveTab] = useState<string>('')
+
+    // Helper: Excel Serial Date to JS Date
+    const parseExcelDate = (serial: number) => {
+        // Excel base date: Dec 30, 1899
+        const utc_days = Math.floor(serial - 25569);
+        const utc_value = utc_days * 86400;
+        const date_info = new Date(utc_value * 1000);
+        return date_info.toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' }).replace('.', '');
+    }
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
 
         setSelectedFile(file)
-        setUploading(true) // Show loading while parsing
+        setUploading(true)
         setMessage('Analizando archivo...')
 
         try {
@@ -33,40 +42,36 @@ export default function FinancialUpload() {
             setSheetNames(sheets)
 
             // Generate previews for all sheets 
-            const previews: Record<string, string> = {}
+            const previews: Record<string, any[][]> = {}
             const initialSelection: Record<string, 'Import' | 'Skip'> = {}
 
             sheets.forEach(sheet => {
                 const ws = workbook.Sheets[sheet]
+                // Get raw data (matrix)
+                const jsonData = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1, defval: '' })
 
-                // Pre-process cells to format numbers cleanly
-                // SheetJS uses the 'w' (formatted text) field for HTML output if present.
-                // We will forcefully format all numbers to avoid long decimals.
-                const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-                for (let R = range.s.r; R <= range.e.r; ++R) {
-                    for (let C = range.s.c; C <= range.e.c; ++C) {
-                        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-                        const cell = ws[cellAddress];
-
-                        // If cell is a number type ('n') and has a raw value ('v')
-                        if (cell && cell.t === 'n' && typeof cell.v === 'number') {
-                            // Format logic: 
-                            // If it looks like an integer, show no decimals.
-                            // If it has decimals, show 2 max.
-                            // Uses Intl.NumberFormat for nice comma grouping "1,000,000"
-                            cell.w = new Intl.NumberFormat('es-CL', {
+                // Smart Pre-processing
+                // 1. Scan for Excel Dates in headers (first 5 rows)
+                const processedData = jsonData.map((row, rIndex) => {
+                    return row.map((cell: any) => {
+                        // Fix Date Codes (approx > 40000 is year 2009+)
+                        if (rIndex < 5 && typeof cell === 'number' && cell > 40000 && cell < 60000) {
+                            return parseExcelDate(cell);
+                        }
+                        // Format large numbers
+                        if (typeof cell === 'number') {
+                            return new Intl.NumberFormat('es-CL', {
                                 maximumFractionDigits: 2,
                                 minimumFractionDigits: 0
-                            }).format(cell.v);
-
-                            // Important: sheet_to_html prefers 'w' if it exists.
+                            }).format(cell);
                         }
-                    }
-                }
+                        return cell;
+                    })
+                })
 
-                // Parse as HTML with the new formatted values
-                const html = XLSX.utils.sheet_to_html(ws, { id: 'excel-preview-table', editable: false })
-                previews[sheet] = html as any
+                previews[sheet] = processedData
+                // Default Logic: Import 'EERR' or 'Balance' automatically? 
+                // For now sticking to Manual Selection as 'Skip' default default.
                 initialSelection[sheet] = 'Skip'
             })
 
@@ -83,6 +88,21 @@ export default function FinancialUpload() {
             setMessage('Error al leer el archivo Excel')
             setUploading(false)
         }
+    }
+
+    // Helper: Smart Row Styling
+    const getRowStyle = (sheetName: string, row: any[]) => {
+        const firstCell = String(row[0] || '').toLowerCase();
+
+        // EERR Logic
+        if (sheetName.toLowerCase().includes('eerr') || sheetName.toLowerCase().includes('resultados')) {
+            if (firstCell.includes('margen')) return 'bg-emerald-50/80 hover:bg-emerald-100/50';
+            if (firstCell.includes('ebitda') || firstCell.includes('utilidad') || firstCell.includes('resultado')) {
+                return 'bg-fuchsia-50/80 hover:bg-fuchsia-100/50';
+            }
+        }
+        // Default Hover
+        return 'hover:bg-gray-50';
     }
 
     const toggleSheetAction = (sheet: string, action: 'Import' | 'Skip') => {
@@ -118,7 +138,7 @@ export default function FinancialUpload() {
 
             if (uploadError) throw uploadError
 
-            // 2. Insert into DB with Metadata about selected sheets
+            // 2. Insert into DB with Metadata
             const { error: dbError } = await supabase
                 .from('financial_records')
                 .insert({
@@ -126,12 +146,6 @@ export default function FinancialUpload() {
                     file_url: uploadData?.path,
                     source_type: selectedFile.name.endsWith('.pdf') ? 'PDF' : 'EXCEL',
                     status: 'PENDING',
-                    // Store the selected sheets in a metadata column if it exists, 
-                    // or currently we just log it. Ideally user's DB should support this.
-                    // For now, we assume the backend will process the file. 
-                    // NOTE: To strictly enforce "only import selected", the backend parser 
-                    // must read this metadata. I'm adding it as a JSON 'metadata' field 
-                    // assuming the schema supports it or is flexible (jsonb).
                     metadata: {
                         sheets_to_process: sheetsToImport
                     }
@@ -141,7 +155,6 @@ export default function FinancialUpload() {
 
             setStatus('success')
             setMessage('¡Archivo subido y procesado correctamente!')
-            // Reset after delay or keep success state
 
         } catch (error: any) {
             console.error(error)
@@ -155,7 +168,7 @@ export default function FinancialUpload() {
     if (status === 'review') {
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-                <div className="w-full max-w-6xl h-[85vh] bg-[#0f1014] border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                <div className="w-full max-w-7xl h-[90vh] bg-[#0f1014] border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
 
                     {/* Header */}
                     <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/5">
@@ -183,7 +196,7 @@ export default function FinancialUpload() {
                     <div className="flex-1 flex overflow-hidden">
 
                         {/* Sidebar: Sheets */}
-                        <div className="w-1/3 max-w-xs border-r border-white/10 bg-black/20 flex flex-col">
+                        <div className="w-1/4 max-w-[280px] border-r border-white/10 bg-black/20 flex flex-col">
                             <div className="p-4 border-b border-white/5">
                                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Hojas Detectadas ({sheetNames.length})</p>
                             </div>
@@ -249,8 +262,8 @@ export default function FinancialUpload() {
                             </div>
                         </div>
 
-                        {/* Main Preview Area */}
-                        <div className="flex-1 flex flex-col bg-[#0f1014] relative">
+                        {/* Smart Table Preview Area */}
+                        <div className="flex-1 flex flex-col bg-[#0f1014] relative text-white">
                             {/* Toolbar */}
                             <div className="h-12 border-b border-white/10 flex items-center justify-between px-6 bg-white/5">
                                 <div className="flex items-center gap-2 text-sm text-gray-400">
@@ -265,42 +278,32 @@ export default function FinancialUpload() {
                                 </div>
                             </div>
 
-                            {/* HTML Preview */}
-                            <div className="flex-1 overflow-auto custom-scrollbar p-6 bg-[#0f1014] relative">
-                                {/* Inject Custom Styles for Excel Table */}
-                                <style jsx global>{`
-                                    #excel-preview-table {
-                                        width: 100%;
-                                        border-collapse: collapse;
-                                        font-family: 'Inter', sans-serif;
-                                        font-size: 12px;
-                                        color: #111827; /* Dark gray text */
-                                        background-color: #ffffff;
-                                    }
-                                    #excel-preview-table td, #excel-preview-table th {
-                                        border: 1px solid #e5e7eb; /* Light gray border */
-                                        padding: 8px 12px;
-                                        white-space: nowrap;
-                                    }
-                                    #excel-preview-table tr:first-child td {
-                                        font-weight: bold;
-                                        color: #1f2937;
-                                        background-color: #f3f4f6; /* Light gray header */
-                                        position: sticky;
-                                        top: 0;
-                                        z-index: 10;
-                                        border-bottom: 2px solid #d1d5db;
-                                    }
-                                    #excel-preview-table tr:hover td {
-                                        background-color: #f9fafb;
-                                    }
-                                `}</style>
-
-                                {sheetPreviews[activeTab] ? (
-                                    <div
-                                        className="rounded-lg overflow-hidden shadow-sm"
-                                        dangerouslySetInnerHTML={{ __html: sheetPreviews[activeTab] as unknown as string }}
-                                    />
+                            {/* Render Smart React Table */}
+                            <div className="flex-1 overflow-auto bg-white relative">
+                                {/* White paper background for the table content itself */}
+                                {sheetPreviews[activeTab] && sheetPreviews[activeTab].length > 0 ? (
+                                    <table className="w-full text-xs text-left border-collapse">
+                                        <thead className="bg-gray-100 text-gray-700 font-bold sticky top-0 z-10 shadow-sm">
+                                            <tr>
+                                                {sheetPreviews[activeTab][0].map((header: any, i: number) => (
+                                                    <th key={i} className="px-4 py-3 border-b border-gray-300 border-r last:border-r-0 whitespace-nowrap bg-gray-100">
+                                                        {header}
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-200 text-gray-800">
+                                            {sheetPreviews[activeTab].slice(1).map((row: any[], i: number) => (
+                                                <tr key={i} className={`transition-colors ${getRowStyle(activeTab, row)}`}>
+                                                    {row.map((cell: any, j: number) => (
+                                                        <td key={j} className="px-4 py-2 border-r border-gray-200 last:border-r-0 whitespace-nowrap">
+                                                            {cell}
+                                                        </td>
+                                                    ))}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 ) : (
                                     <div className="h-full flex flex-col items-center justify-center text-gray-500 gap-4 opacity-50 bg-[#0f1014]">
                                         <div className="p-4 rounded-full bg-white/5">
@@ -310,89 +313,91 @@ export default function FinancialUpload() {
                                     </div>
                                 )}
                             </div>
-
-
-                            {/* Footer */}
-                            <div className="p-4 border-t border-white/10 bg-white/5 flex justify-between items-center">
-                                <div className="px-4 text-sm text-gray-400">
-                                    <span className="text-emerald-400 font-bold">{Object.values(selectedSheets).filter(s => s === 'Import').length}</span> hojas seleccionadas para importar
-                                </div>
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => { setStatus('idle'); setSelectedFile(null); }}
-                                        className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        onClick={handleFinalizeUpload}
-                                        disabled={uploading}
-                                        className="px-8 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-black text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                                    >
-                                        {uploading ? (
-                                            <>
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                                Procesando...
-                                            </>
-                                        ) : (
-                                            <>
-                                                Finalizar Importación
-                                                <Upload className="w-4 h-4 ml-1" />
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-                        </div >
-                    </div >
-                    )
-    }
-
-                    return (
-                    <div className="w-full max-w-md p-8 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl">
-                        <div className="flex flex-col items-center justify-center space-y-6">
-                            <div className="p-4 rounded-full bg-gradient-to-tr from-emerald-400 to-cyan-500 shadow-lg">
-                                <Upload className="w-8 h-8 text-white" />
-                            </div>
-
-                            <div className="text-center space-y-2">
-                                <h3 className="text-xl font-bold text-white tracking-tight">Cargar Estado de Resultados</h3>
-                                <p className="text-sm text-gray-300">Arrastra tu Excel o PDF aquí para analizar</p>
-                            </div>
-
-                            <div className="w-full">
-                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/30 rounded-xl cursor-pointer hover:bg-white/5 transition-all group">
-                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                        {uploading ? (
-                                            <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
-                                        ) : (
-                                            <FileUp className="w-8 h-8 text-gray-400 group-hover:text-white transition-colors" />
-                                        )}
-                                    </div>
-                                    <input
-                                        type="file"
-                                        className="hidden"
-                                        onChange={handleFileSelect}
-                                        accept=".xlsx,.xls,.csv,.pdf"
-                                        disabled={uploading}
-                                    />
-                                </label>
-                            </div>
-
-                            {status === 'success' && (
-                                <div className="flex items-center space-x-2 text-emerald-400 animate-in fade-in slide-in-from-bottom-2">
-                                    <CheckCircle className="w-5 h-5" />
-                                    <span className="text-sm font-medium">{message}</span>
-                                </div>
-                            )}
-
-                            {status === 'error' && (
-                                <div className="flex items-center space-x-2 text-rose-400 animate-in fade-in slide-in-from-bottom-2">
-                                    <AlertCircle className="w-5 h-5" />
-                                    <span className="text-sm font-medium">{message}</span>
-                                </div>
-                            )}
                         </div>
                     </div>
-                    )
+
+
+                    {/* Footer */}
+                    <div className="p-4 border-t border-white/10 bg-white/5 flex justify-between items-center">
+                        <div className="px-4 text-sm text-gray-400">
+                            <span className="text-emerald-400 font-bold">{Object.values(selectedSheets).filter(s => s === 'Import').length}</span> hojas seleccionadas para importar
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => { setStatus('idle'); setSelectedFile(null); }}
+                                className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleFinalizeUpload}
+                                disabled={uploading}
+                                className="px-8 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-black text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                {uploading ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Procesando...
+                                    </>
+                                ) : (
+                                    <>
+                                        Finalizar Importación
+                                        <Upload className="w-4 h-4 ml-1" />
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div >
+            </div >
+        )
+    }
+
+    return (
+        <div className="w-full max-w-md p-8 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl">
+            <div className="flex flex-col items-center justify-center space-y-6">
+                <div className="p-4 rounded-full bg-gradient-to-tr from-emerald-400 to-cyan-500 shadow-lg">
+                    <Upload className="w-8 h-8 text-white" />
+                </div>
+
+                <div className="text-center space-y-2">
+                    <h3 className="text-xl font-bold text-white tracking-tight">Cargar Estado de Resultados</h3>
+                    <p className="text-sm text-gray-300">Arrastra tu Excel o PDF aquí para analizar</p>
+                </div>
+
+                <div className="w-full">
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/30 rounded-xl cursor-pointer hover:bg-white/5 transition-all group">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            {uploading ? (
+                                <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+                            ) : (
+                                <FileUp className="w-8 h-8 text-gray-400 group-hover:text-white transition-colors" />
+                            )}
+                        </div>
+                        <input
+                            type="file"
+                            className="hidden"
+                            onChange={handleFileSelect}
+                            accept=".xlsx,.xls,.csv,.pdf"
+                            disabled={uploading}
+                        />
+                    </label>
+                </div>
+
+                {status === 'success' && (
+                    <div className="flex items-center space-x-2 text-emerald-400 animate-in fade-in slide-in-from-bottom-2">
+                        <CheckCircle className="w-5 h-5" />
+                        <span className="text-sm font-medium">{message}</span>
+                    </div>
+                )}
+
+                {status === 'error' && (
+                    <div className="flex items-center space-x-2 text-rose-400 animate-in fade-in slide-in-from-bottom-2">
+                        <AlertCircle className="w-5 h-5" />
+                        <span className="text-sm font-medium">{message}</span>
+                    </div>
+                )}
+            </div>
+        </div>
+    )
 }
