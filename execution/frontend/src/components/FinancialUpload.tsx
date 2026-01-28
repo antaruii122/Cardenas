@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Upload, FileUp, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import * as XLSX from 'xlsx'
@@ -22,6 +22,47 @@ export default function FinancialUpload() {
     const [sheetPreviews, setSheetPreviews] = useState<Record<string, any[][]>>({})
     const [selectedSheets, setSelectedSheets] = useState<Record<string, 'Import' | 'Skip'>>({})
     const [activeTab, setActiveTab] = useState<string>('')
+
+    // Debug mode (Ctrl+Shift+D to toggle)
+    const [debugMode, setDebugMode] = useState(false)
+    const modalRef = useRef<HTMLDivElement>(null)
+    const tableContainerRef = useRef<HTMLDivElement>(null)
+
+    // Keyboard shortcut for debug mode
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+                e.preventDefault()
+                setDebugMode(prev => !prev)
+                console.log('Debug Mode:', !debugMode)
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [debugMode])
+
+    // Console logging for debugging
+    useEffect(() => {
+        if (status === 'review' && (debugMode || process.env.NODE_ENV === 'development')) {
+            setTimeout(() => {
+                console.log('📊 Layout Debug Info:')
+                console.log('Modal:', {
+                    width: modalRef.current?.offsetWidth,
+                    height: modalRef.current?.offsetHeight,
+                    expectedWidth: window.innerWidth * 0.95,
+                    expectedHeight: window.innerHeight * 0.90
+                })
+                console.log('Table Container:', {
+                    width: tableContainerRef.current?.offsetWidth,
+                    height: tableContainerRef.current?.offsetHeight,
+                    scrollWidth: tableContainerRef.current?.scrollWidth,
+                    scrollHeight: tableContainerRef.current?.scrollHeight,
+                    hasHorizontalOverflow: tableContainerRef.current ? tableContainerRef.current.scrollWidth > tableContainerRef.current.offsetWidth : false,
+                    hasVerticalOverflow: tableContainerRef.current ? tableContainerRef.current.scrollHeight > tableContainerRef.current.offsetHeight : false
+                })
+            }, 500) // Wait for layout to settle
+        }
+    }, [status, debugMode])
 
     // Helper: Excel Serial Date to JS Date
     const parseExcelDate = (serial: number) => {
@@ -254,7 +295,7 @@ export default function FinancialUpload() {
     if (status === 'review') {
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-200">
-                <div className="w-[95vw] h-[90vh] bg-[#0f1014] border border-white/10 rounded-2xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-200">
+                <div ref={modalRef} className="w-[95vw] h-[90vh] bg-[#0f1014] border border-white/10 rounded-2xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-200">
 
                     {/* Header */}
                     <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/5">
@@ -365,7 +406,7 @@ export default function FinancialUpload() {
                             </div>
 
                             {/* Render Smart React Table */}
-                            <div className="flex-1 relative overflow-auto">
+                            <div ref={tableContainerRef} className="flex-1 relative overflow-auto" style={{ outline: debugMode ? '2px solid lime' : 'none' }}>
                                 {sheetPreviews[activeTab] && sheetPreviews[activeTab].length > 0 ? (
                                     <SmartTable
                                         headers={sheetPreviews[activeTab][0]}
@@ -425,6 +466,51 @@ export default function FinancialUpload() {
                             </button>
                         </div>
                     </div>
+
+                    {/* Debug Panel */}
+                    {debugMode && (
+                        <div className="absolute top-4 right-4 bg-black/95 border border-lime-500 rounded-lg p-4 text-xs font-mono z-50 max-w-sm">
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-lime-400 font-bold">🐛 DEBUG MODE</span>
+                                <span className="text-gray-400 text-[10px]">Ctrl+Shift+D to toggle</span>
+                            </div>
+
+                            <div className="space-y-2 text-gray-300">
+                                <div className="border-b border-white/10 pb-2">
+                                    <div className="text-lime-400 font-bold mb-1">Modal Container:</div>
+                                    <div>Width: {modalRef.current?.offsetWidth}px (expected: ~{window.innerWidth * 0.95}px)</div>
+                                    <div>Height: {modalRef.current?.offsetHeight}px (expected: ~{window.innerHeight * 0.90}px)</div>
+                                </div>
+
+                                <div className="border-b border-white/10 pb-2">
+                                    <div className="text-lime-400 font-bold mb-1">Table Container:</div>
+                                    <div>Width: {tableContainerRef.current?.offsetWidth}px</div>
+                                    <div>Height: {tableContainerRef.current?.offsetHeight}px</div>
+                                    <div>ScrollWidth: {tableContainerRef.current?.scrollWidth}px</div>
+                                    <div>ScrollHeight: {tableContainerRef.current?.scrollHeight}px</div>
+                                </div>
+
+                                <div className="border-b border-white/10 pb-2">
+                                    <div className="text-lime-400 font-bold mb-1">Overflow Status:</div>
+                                    <div>Horizontal: {tableContainerRef.current && tableContainerRef.current.scrollWidth > tableContainerRef.current.offsetWidth ? '🔴 YES' : '🟢 NO'}</div>
+                                    <div>Vertical: {tableContainerRef.current && tableContainerRef.current.scrollHeight > tableContainerRef.current.offsetHeight ? '🔴 YES' : '🟢 NO'}</div>
+                                </div>
+
+                                <div>
+                                    <div className="text-lime-400 font-bold mb-1">Scrollbar Visible:</div>
+                                    <div>H-Scroll: {tableContainerRef.current && tableContainerRef.current.scrollWidth > tableContainerRef.current.offsetWidth ? '✅ Should be visible' : '❌ Not needed'}</div>
+                                    <div>V-Scroll: {tableContainerRef.current && tableContainerRef.current.scrollHeight > tableContainerRef.current.offsetHeight ? '✅ Should be visible' : '❌ Not needed'}</div>
+                                </div>
+
+                                <div className="mt-3 pt-2 border-t border-white/10">
+                                    <div className="text-yellow-400 text-[10px]">
+                                        Green outline = scrollable area<br />
+                                        Check console for detailed logs
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div >
             </div >
         )
